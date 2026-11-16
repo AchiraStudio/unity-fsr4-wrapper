@@ -112,6 +112,10 @@ All runtime assemblies compile only when the `ENABLE_UPSCALER_FRAMEWORK` define 
 
 ## How it works
 
+![How the wrapper plugs into Unity: URP, the Upscaler Framework, FSR4Upscaler, the native plugin, AMD's loader and upscaler, then the GPU](Documentation~/images/pipeline.svg)
+
+The same flow as text:
+
 ```
 URP post-processing -> Unity Upscaler Framework (UpscalerRegistry / IUpscaler / UpscalingIO)
    -> FSR4Upscaler (C#)  render-graph unsafe pass: output texture + parameter block

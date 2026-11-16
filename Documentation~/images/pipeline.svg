@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>How the FSR 4 wrapper plugs into Unity</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#9aa4b2"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" rx="14" fill="#10141b"/>
+
+  <text x="480" y="40" text-anchor="middle" font-size="22" font-weight="700" fill="#f2f5f9">How the wrapper plugs into Unity</text>
+  <text x="480" y="62" text-anchor="middle" font-size="13" fill="#9aa4b2">One frame, from URP to the GPU</text>
+
+  <!-- lane labels -->
+  <text x="40" y="104" font-size="12" font-weight="600" fill="#6f7a8a" letter-spacing="1">UNITY (C#)</text>
+  <text x="40" y="274" font-size="12" font-weight="600" fill="#6f7a8a" letter-spacing="1">NATIVE (RENDER THREAD)</text>
+  <text x="40" y="444" font-size="12" font-weight="600" fill="#6f7a8a" letter-spacing="1">GPU</text>
+
+  <!-- C# lane -->
+  <rect x="40" y="116" width="240" height="96" rx="10" fill="#1b2330" stroke="#33415a"/>
+  <text x="160" y="148" text-anchor="middle" font-size="15" font-weight="600" fill="#f2f5f9">URP post-processing</text>
+  <text x="160" y="170" text-anchor="middle" font-size="12" fill="#9aa4b2">colour, depth, motion vectors</text>
+  <text x="160" y="188" text-anchor="middle" font-size="12" fill="#9aa4b2">camera jitter</text>
+
+  <rect x="360" y="116" width="240" height="96" rx="10" fill="#1b2330" stroke="#33415a"/>
+  <text x="480" y="148" text-anchor="middle" font-size="15" font-weight="600" fill="#f2f5f9">Upscaler Framework</text>
+  <text x="480" y="170" text-anchor="middle" font-size="12" fill="#9aa4b2">UpscalerRegistry, IUpscaler,</text>
+  <text x="480" y="188" text-anchor="middle" font-size="12" fill="#9aa4b2">UpscalingIO</text>
+
+  <rect x="680" y="116" width="240" height="96" rx="10" fill="#3a1d22" stroke="#ed1c24"/>
+  <text x="800" y="148" text-anchor="middle" font-size="15" font-weight="600" fill="#ffffff">FSR4Upscaler</text>
+  <text x="800" y="170" text-anchor="middle" font-size="12" fill="#f0c4c7">render-graph unsafe pass</text>
+  <text x="800" y="188" text-anchor="middle" font-size="12" fill="#f0c4c7">jitter, quality ratio, mip bias</text>
+
+  <line x1="280" y1="164" x2="356" y2="164" stroke="#9aa4b2" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="600" y1="164" x2="676" y2="164" stroke="#9aa4b2" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- native lane -->
+  <rect x="680" y="286" width="240" height="96" rx="10" fill="#3a1d22" stroke="#ed1c24"/>
+  <text x="800" y="318" text-anchor="middle" font-size="15" font-weight="600" fill="#ffffff">FSR4UnityPlugin.dll</text>
+  <text x="800" y="340" text-anchor="middle" font-size="12" fill="#f0c4c7">owns the D3D12 / Vulkan objects</text>
+  <text x="800" y="358" text-anchor="middle" font-size="12" fill="#f0c4c7">explicit resource states</text>
+
+  <rect x="360" y="286" width="240" height="96" rx="10" fill="#1b2330" stroke="#33415a"/>
+  <text x="480" y="318" text-anchor="middle" font-size="15" font-weight="600" fill="#f2f5f9">amd_fidelityfx_loader</text>
+  <text x="480" y="340" text-anchor="middle" font-size="12" fill="#9aa4b2">picks the best provider</text>
+  <text x="480" y="358" text-anchor="middle" font-size="12" fill="#9aa4b2">for this GPU and driver</text>
+
+  <rect x="40" y="286" width="240" height="96" rx="10" fill="#1b2330" stroke="#33415a"/>
+  <text x="160" y="318" text-anchor="middle" font-size="15" font-weight="600" fill="#f2f5f9">amd_fidelityfx_upscaler</text>
+  <text x="160" y="340" text-anchor="middle" font-size="12" fill="#9aa4b2">FSR 4 (ML), else FSR 3.1</text>
+  <text x="160" y="358" text-anchor="middle" font-size="12" fill="#9aa4b2">AMD, signed, unmodified</text>
+
+  <!-- C# -> native -->
+  <line x1="800" y1="212" x2="800" y2="282" stroke="#9aa4b2" stroke-width="2" marker-end="url(#a)"/>
+  <text x="812" y="252" font-size="12" fill="#9aa4b2">IssuePluginEventAndData</text>
+  <line x1="676" y1="334" x2="604" y2="334" stroke="#9aa4b2" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="356" y1="334" x2="284" y2="334" stroke="#9aa4b2" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- GPU lane -->
+  <rect x="40" y="456" width="880" height="64" rx="10" fill="#14261c" stroke="#2f6b47"/>
+  <text x="480" y="484" text-anchor="middle" font-size="15" font-weight="600" fill="#e6f5ec">Upscaled image back into the URP output texture</text>
+  <text x="480" y="504" text-anchor="middle" font-size="12" fill="#a8d5b9">Direct3D 12 (own command list, ExecuteCommandList)   |   Vulkan (recorded into Unity's command buffer)</text>
+  <line x1="160" y1="382" x2="160" y2="452" stroke="#9aa4b2" stroke-width="2" marker-end="url(#a)"/>
+</svg>
