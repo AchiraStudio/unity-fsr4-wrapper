@@ -1,0 +1,18 @@
+{
+    "name": "AchiraStudio.FSR4.FrameGeneration",
+    "rootNamespace": "AchiraStudio.FSR4.FrameGeneration",
+    "references": [
+        "AchiraStudio.FSR4.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ENABLE_UPSCALER_FRAMEWORK"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

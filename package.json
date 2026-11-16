@@ -1,0 +1,20 @@
+{
+  "name": "com.achirastudio.fsr4",
+  "displayName": "AchiraStudio FSR (Upscaler + Frame Generation)",
+  "version": "0.2.0",
+  "unity": "6000.6",
+  "description": "AMD FidelityFX Super Resolution (FSR 4 ML / FSR 3.1 fallback) as a custom upscaler for URP on the Unity Upscaler Framework, with an optional experimental frame-generation module. Direct3D12 and Vulkan. Built on FidelityFX SDK 2.4.0.",
+  "keywords": ["fsr", "fsr4", "upscaler", "frame generation", "urp", "amd", "fidelityfx"],
+  "author": { "name": "AchiraStudio" },
+  "license": "MIT",
+  "dependencies": {
+    "com.unity.render-pipelines.universal": "17.6.0"
+  },
+  "samples": [
+    {
+      "displayName": "Frame generation toggle",
+      "description": "Minimal IMGUI toggle that switches frame generation from your own code.",
+      "path": "Samples~/FrameGenerationToggle"
+    }
+  ]
+}
