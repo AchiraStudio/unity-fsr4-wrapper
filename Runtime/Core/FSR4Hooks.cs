@@ -44,6 +44,9 @@ namespace AchiraStudio.FSR4
         public Vector3 cameraUp;
         public Vector3 cameraRight;
         public Vector3 cameraForward;
+
+        /// <summary>The camera that was upscaled. Null when the pipeline did not provide one.</summary>
+        public Camera camera;
     }
 
     public delegate void UpscaleDispatchedHandler(CommandBuffer cmd, in FSR4FrameData frame);

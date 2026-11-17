@@ -353,9 +353,11 @@ namespace AchiraStudio.FSR4
                 if (pd.raiseFrameHook)
                 {
                     Vector3 camPos = Vector3.zero, camUp = Vector3.up, camRight = Vector3.right, camFwd = Vector3.forward;
+                    Camera cam = null;
                     if (frameData.Contains<UniversalCameraData>())
                     {
-                        Transform camT = frameData.Get<UniversalCameraData>().camera.transform;
+                        cam = frameData.Get<UniversalCameraData>().camera;
+                        Transform camT = cam.transform;
                         camPos = camT.position; camUp = camT.up; camRight = camT.right; camFwd = camT.forward;
                     }
                     pd.frame = new FSR4FrameData
@@ -374,6 +376,7 @@ namespace AchiraStudio.FSR4
                         displayResolutionMotionVectors = displayResMV,
                         motionVectorJitterCancelled = io.jitteredMotionVectors,
                         cameraPosition = camPos, cameraUp = camUp, cameraRight = camRight, cameraForward = camFwd,
+                        camera = cam,
                     };
                 }
 

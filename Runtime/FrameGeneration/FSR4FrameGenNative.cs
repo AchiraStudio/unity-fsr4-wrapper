@@ -22,7 +22,8 @@ namespace AchiraStudio.FSR4.FrameGeneration
         public float cameraNear, cameraFar, cameraFovY;
         public float viewSpaceToMeters;
         public Vector3 camPos, camUp, camRight, camForward;
-        public int pad0;
+        /// <summary>Time.frameCount of the frame being prepared (0 = unknown). The native plugin accepts one prepare per frame.</summary>
+        public int frameIndex;
         public IntPtr depth, motionVectors;
     }
 
@@ -71,6 +72,7 @@ namespace AchiraStudio.FSR4.FrameGeneration
         [DllImport(Dll)] static extern int FG_GetLastMessage(byte* buffer, int capacity);
         [DllImport(Dll)] static extern int FG_GetBackend();
         [DllImport(Dll)] static extern void FG_GetStructSizes(int* prepare, int* config, int* stats);
+        [DllImport(Dll)] static extern int FG_GetProviderVersion(byte* buffer, int capacity);
 
         public static bool TryInitialize(out string error)
         {
@@ -123,6 +125,19 @@ namespace AchiraStudio.FSR4.FrameGeneration
             byte* buf = stackalloc byte[512];
             int len = FG_GetLastMessage(buf, 512);
             return len <= 0 ? string.Empty : Encoding.UTF8.GetString(buf, Math.Min(len, 511));
+        }
+
+        /// <summary>Provider version of the frame-generation context. Empty until one exists, or when the DLL predates the export.</summary>
+        public static string ProviderVersion()
+        {
+            try
+            {
+                byte* buf = stackalloc byte[96];
+                int len = FG_GetProviderVersion(buf, 96);
+                return len <= 0 ? string.Empty : Encoding.UTF8.GetString(buf, Math.Min(len, 95));
+            }
+            catch (EntryPointNotFoundException) { return string.Empty; }   // older FSR4FrameGen.dll: rebuild it to get this
+            catch (DllNotFoundException) { return string.Empty; }
         }
 
         public static string BackendName()

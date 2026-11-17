@@ -7,7 +7,7 @@
 // Per-context ffx state is only touched on the render thread. Cross-thread status goes through g_stateMutex.
 //
 // NOTE: written against the headers in FidelityFX-SDK-2.4.0 and Unity's IUnityGraphicsD3D12v6. It has NOT been
-// run on hardware by the author - treat the first run as a bring-up session (see Native~/README.md).
+// run on hardware by the author - treat the first run as a bring-up session (see Documentation~/Building-the-native-plugins.md).
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -166,6 +166,9 @@ static std::wstring GetPluginDirectory()
 
 static bool LoadAmdLoader()
 {
+    // Reached from the main thread (status / probe / version queries) and from the render thread (dispatch).
+    static std::mutex loadMutex;
+    std::lock_guard<std::mutex> loadLock(loadMutex);
     if (g_loadAttempted)
         return g_loadOk;
     g_loadAttempted = true;

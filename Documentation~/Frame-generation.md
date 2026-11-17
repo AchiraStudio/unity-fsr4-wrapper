@@ -21,12 +21,17 @@ The Editor has no swapchain for D3D12 (`GetSwapChain()` returns null) and loads 
 - FG 4.x needs a Radeon RX 9000 series GPU; other GPUs get the FG 3.1 provider. FG expects roughly 30+ real fps.
 - Adds about one frame of latency (the real frame is held back for the interpolated one).
 - The UI is part of the backbuffer, so animated UI can ghost. No HUD-less pass yet.
+- One camera drives frame generation per frame, because the swapchain is presented once per frame and the whole backbuffer is interpolated from one camera's depth and motion vectors. By default that is the first camera upscaled in the frame; further upscaled cameras in the same frame are ignored (a warning is logged once). Set `FSR4FrameGeneration.sourceCamera` to choose the camera. Split-screen is not supported.
 - Vulkan: the plugin must be preloaded in the Player (the `.meta` does this) so the swapchain is created through the hook; the hook adds one spare swapchain image and `TRANSFER_SRC/DST` usage.
 - D3D12 backbuffer formats supported: R8G8B8A8, B8G8R8A8, R10G10B10A2, R16G16B16A16_FLOAT.
 - If the present hook does not keep up for 5 consecutive frames the plugin switches itself off (state *Stalled*).
 
 ## Status API
 `FSR4FrameGeneration.state`, `.statusMessage`, `.GetStats()` (prepared / generated / passed-through frames, smoothed base frame time, GPU memory, last FFX error code).
+
+`FSR4FrameGeneration.providerInUse` is the version name of the frame-generation provider FidelityFX actually selected (FG 4.x or 3.1). It is empty until generation has started. It needs an `FSR4FrameGen.dll` built from the current sources; with an older DLL it stays empty.
+
+`FSR4FrameRateMeter` measures the rendered and the generated frame rate separately (see the README), and the debug HUD module (`FSR4DebugHud`, or `-fsr4-hud` on the command line) shows both together with the state and the counters.
 
 ## Diagnostics
 
@@ -53,3 +58,5 @@ The log shows `diagnostic mode = N`, the device-removed reason at the start of e
 ### Performance
 
 The log line `perf (240 frames): real N fps ...` is written every 240 generated frames. It shows the real (rendered) frame rate, the average time spent in the present hook, the average pacing wait and the average wait for earlier command lists. With frame generation the display receives about twice the real frame rate; the game's FPS counter shows both. The pacing wait (`pacing` option) blocks the render thread for half a frame interval: if the render thread is the bottleneck, turn `pacing` off to keep the real frame rate.
+
+Be aware of what that trades away. With `pacing` off the real frame is presented immediately after the generated one, so the generated frame is on screen only for the time the copy and the second present take. The `generated` counter keeps counting, but the picture may not look any smoother. The counters report frames whose present call succeeded, not frames the display showed.

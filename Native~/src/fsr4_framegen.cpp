@@ -75,7 +75,7 @@ struct FGPrepareParams
     float    cameraNear, cameraFar, cameraFovY;
     float    viewSpaceToMeters;
     float    camPos[3], camUp[3], camRight[3], camForward[3];
-    int32_t  pad0;
+    int32_t  frameIndex;                  // engine frame count; 0 = not provided (was padding before, so older C# sends 0)
     void*    depth;                       // ID3D12Resource* or native VkImage
     void*    motionVectors;
 };
@@ -154,11 +154,16 @@ static bool g_loadAttempted = false, g_loadOk = false;
 static ffxContext g_fg = nullptr;
 static uint32_t   g_fgCreateFlags = 0, g_fgW = 0, g_fgH = 0, g_fgMaxW = 0, g_fgMaxH = 0, g_fgFormat = 0;
 static bool       g_fgFailed = false;
+static std::atomic<bool>     g_fgReady{ false };       // g_fg exists. The present hooks read this instead of g_fg, which is guarded by g_fgMutex
+static std::atomic<uint64_t> g_ownVram{ 0 };           // bytes of the plugin's own two textures (current-frame copy + interpolated frame)
+static std::string           g_fgProvider;             // provider version name of the FG context (guarded by g_stateMutex)
+static int32_t               g_lastFrameIndex = 0;     // render thread: engine frame of the last accepted prepare
+static std::mutex            g_loadMutex;              // LoadAmdLoader
 static uint64_t   g_frameId = 0;                       // render thread; ++ per prepared frame
 static std::atomic<uint64_t> g_preparedFrame{ 0 };     // last frame id prepared (render thread -> hook)
 static std::atomic<uint64_t> g_handledFrame{ 0 };      // last frame id the hook finished (generated or skipped)
 static std::atomic<bool>     g_resetNext{ true };
-static int        g_stallStrikes = 0;
+static std::atomic<int> g_stallStrikes{ 0 };          // render thread counts, FG_SetConfig (main thread) resets
 
 static void SetMessage(const std::string& s)
 {
@@ -244,6 +249,7 @@ static std::string ModuleOf(const void* addr)
 
 static bool LoadAmdLoader()
 {
+    std::lock_guard<std::mutex> loadLock(g_loadMutex);
     if (g_loadAttempted)
         return g_loadOk;
     g_loadAttempted = true;
@@ -279,6 +285,7 @@ static VkDeviceContext g_vkDevCtx{};
 
 static void DestroyFgContext()
 {
+    g_fgReady = false;
     if (g_fg)
     {
         if (g_idleFn) g_idleFn();
@@ -287,6 +294,8 @@ static void DestroyFgContext()
     }
     g_fgW = g_fgH = 0;
     g_vram = 0;
+    std::lock_guard<std::mutex> lock(g_stateMutex);
+    g_fgProvider.clear();
 }
 
 static bool EnsureFgContext(const FGPrepareParams& p, uint32_t ffxFormat, uint32_t dispW, uint32_t dispH)
@@ -343,6 +352,19 @@ static bool EnsureFgContext(const FGPrepareParams& p, uint32_t ffxFormat, uint32
     q.gpuMemoryUsageFrameGeneration = &mem;
     if (g_ffxQuery && g_ffxQuery(&g_fg, &q.header) == FFX_API_RETURN_OK)
         g_vram = mem.totalUsageInBytes;
+
+    // Which provider did we get (FG 4.x on supported Radeon GPUs, 3.1 elsewhere)? Reported through FG_GetProviderVersion.
+    std::string provider;
+    ffxQueryGetProviderVersion pv{};
+    pv.header.type = FFX_API_QUERY_DESC_TYPE_GET_PROVIDER_VERSION;
+    if (g_ffxQuery && g_ffxQuery(&g_fg, &pv.header) == FFX_API_RETURN_OK && pv.versionName)
+        provider = pv.versionName;
+    FgLog("frame-generation context created: provider '%s', display %ux%u, max render %ux%u", provider.c_str(), dispW, dispH, p.maxRenderW, p.maxRenderH);
+    {
+        std::lock_guard<std::mutex> lock(g_stateMutex);
+        g_fgProvider = provider;
+    }
+    g_fgReady = true;
     return true;
 }
 
@@ -587,6 +609,7 @@ static bool DxEnsureTextures(ID3D12Device* dev, const D3D12_RESOURCE_DESC& bb)
         return true;
     DxIdle();
     g_dx.curCopy.Reset(); g_dx.interp.Reset();
+    g_ownVram = 0;
     D3D12_HEAP_PROPERTIES hp{}; hp.Type = D3D12_HEAP_TYPE_DEFAULT;
     D3D12_RESOURCE_DESC d{};
     d.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D; d.Width = bb.Width; d.Height = bb.Height;
@@ -600,6 +623,7 @@ static bool DxEnsureTextures(ID3D12Device* dev, const D3D12_RESOURCE_DESC& bb)
     g_dx.curCopy->SetName(L"FSR4FG current frame copy");
     g_dx.interp->SetName(L"FSR4FG interpolated frame");
     g_dx.width = bb.Width; g_dx.height = bb.Height; g_dx.fmt = fmt;
+    g_ownVram = 2ull * bb.Width * bb.Height * (fmt == DXGI_FORMAT_R16G16B16A16_FLOAT ? 8ull : 4ull);
     return true;
 }
 
@@ -622,7 +646,7 @@ static bool DxShouldGenerate(IDXGISwapChain* self, UINT flags)
         if (!g_cfg.enabled)
             return false;
     }
-    if (g_state.load() != kFgActive || !g_fg)
+    if (g_state.load() != kFgActive || !g_fgReady.load())
         return false;
     return true;
 }
@@ -727,9 +751,15 @@ static HRESULT DxGeneratedPresent(IDXGISwapChain* self, PresentFn&& realPresent)
         D3D12_RESOURCE_BARRIER b2 = Transition(cur, D3D12_RESOURCE_STATE_COPY_DEST, kSrvAll);
         cl->ResourceBarrier(1, &b2);
 
-        ffxReturnCode_t rc;
+        ffxReturnCode_t rc = FFX_API_RETURN_OK;
+        bool contextGone = false;
+        // Held from the dispatch until the list is on the queue. The render thread destroys the context (under this mutex) only
+        // after waiting for the queue to drain, so a list that references the context's resources must already be queued by then.
+        std::unique_lock<std::mutex> fgLock(g_fgMutex);
+        if (!g_fg)
+            contextGone = true;   // destroyed by the render thread since DxShouldGenerate looked
+        else
         {
-            std::lock_guard<std::mutex> lock(g_fgMutex);
             ffxDispatchDescFrameGeneration d{};
             FillGenerate(d, frame, w, h, cfg, false);
             d.commandList = cl;
@@ -737,7 +767,13 @@ static HRESULT DxGeneratedPresent(IDXGISwapChain* self, PresentFn&& realPresent)
             d.outputs[0]   = ffxApiGetResourceDX12(itp, FFX_API_RESOURCE_STATE_PIXEL_COMPUTE_READ);
             rc = (mode == 3) ? FFX_API_RETURN_OK : g_ffxDispatch(&g_fg, &d.header);
         }
-        if (rc != FFX_API_RETURN_OK)
+        if (contextGone)
+        {
+            // Not an error: frame generation was just switched off or is being re-created. The list only holds the backbuffer
+            // copy, so dropping it leaves the backbuffer in PRESENT and this present passes through.
+            submit = false;
+        }
+        else if (rc != FFX_API_RETURN_OK)
         {
             g_lastReturn = (int)rc;
             SetMessage("ffxDispatch(FrameGeneration) failed, code " + std::to_string(rc));
@@ -773,8 +809,10 @@ static HRESULT DxGeneratedPresent(IDXGISwapChain* self, PresentFn&& realPresent)
             queue->ExecuteCommandLists(1, lists);
             queue->Signal(g_dx.fence.Get(), ++g_dx.fenceValue);
             slot->fenceValue = g_dx.fenceValue;
-            DxCheck("after list 1 (copy + generate + copy back)");
         }
+        fgLock.unlock();
+        if (submit)
+            DxCheck("after list 1 (copy + generate + copy back)");
     }
 
     g_handledFrame = frame;
@@ -1286,6 +1324,7 @@ static void VkDestroyOwnResources()
     if (g_vs.curMem)  { g_vf.freeMem(d, g_vs.curMem, nullptr);       g_vs.curMem = VK_NULL_HANDLE; }
     if (g_vs.interpMem) { g_vf.freeMem(d, g_vs.interpMem, nullptr);  g_vs.interpMem = VK_NULL_HANDLE; }
     g_vs.curLayout = g_vs.interpLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    g_ownVram = 0;
 }
 
 static bool VkEnsureResources()
@@ -1314,6 +1353,7 @@ static bool VkEnsureResources()
             g_vf.createSem(d, &si, nullptr, &s.semGen) != VK_SUCCESS || g_vf.createSem(d, &si, nullptr, &s.semReal) != VK_SUCCESS) return false;
     }
     g_vs.ourFormat = fmt;
+    g_ownVram = 2ull * g_vs.extent.width * g_vs.extent.height * (fmt == VK_FORMAT_R16G16B16A16_SFLOAT ? 8ull : 4ull);
     return true;
 }
 
@@ -1378,7 +1418,7 @@ static VKAPI_ATTR VkResult VKAPI_CALL VkHookQueuePresent(VkQueue queue, const Vk
 {
     auto orig = reinterpret_cast<PFN_vkQueuePresentKHR>(g_vkOrigPresent);
     bool enabled; { std::lock_guard<std::mutex> lock(g_stateMutex); enabled = g_cfg.enabled != 0; }
-    if (!enabled || t_inHook || !g_fg || g_state.load() != kFgActive || pi->swapchainCount != 1 || pi->pSwapchains[0] != g_vs.swapchain ||
+    if (!enabled || t_inHook || !g_fgReady.load() || g_state.load() != kFgActive || pi->swapchainCount != 1 || pi->pSwapchains[0] != g_vs.swapchain ||
         !g_vs.createdThroughHook || g_vs.images.empty() || queue != g_vk->Instance().graphicsQueue || !g_vf.loaded)
         return orig(queue, pi);
 
@@ -1426,9 +1466,15 @@ static VKAPI_ATTR VkResult VKAPI_CALL VkHookQueuePresent(VkQueue queue, const Vk
         g_vs.interpLayout = VK_IMAGE_LAYOUT_GENERAL;
     }
 
-    ffxReturnCode_t rc;
+    ffxReturnCode_t rc = FFX_API_RETURN_OK;
+    bool contextGone = false;
+    // Held until the command buffer is submitted, for the same reason as in the D3D12 hook: the render thread destroys the
+    // context only after the device is idle, so work that references the context must already be on the queue.
+    std::unique_lock<std::mutex> fgLock(g_fgMutex);
+    if (!g_fg)
+        contextGone = true;   // destroyed by the render thread since the check above; the real frame is shown twice below
+    else
     {
-        std::lock_guard<std::mutex> lock(g_fgMutex);
         ffxDispatchDescFrameGeneration d{};
         FillGenerate(d, frame, g_vs.extent.width, g_vs.extent.height, cfg, false);
         d.commandList  = s.cb;
@@ -1436,8 +1482,8 @@ static VKAPI_ATTR VkResult VKAPI_CALL VkHookQueuePresent(VkQueue queue, const Vk
         d.outputs[0]   = VkOwnResource(g_vs.interp, g_vs.interpCi, FFX_API_RESOURCE_STATE_UNORDERED_ACCESS);
         rc = g_ffxDispatch(&g_fg, &d.header);
     }
-    const bool ok = rc == FFX_API_RETURN_OK;
-    if (!ok) { g_lastReturn = (int)rc; SetMessage("ffxDispatch(FrameGeneration, Vulkan) failed, code " + std::to_string(rc)); }
+    const bool ok = !contextGone && rc == FFX_API_RETURN_OK;
+    if (!ok && !contextGone) { g_lastReturn = (int)rc; SetMessage("ffxDispatch(FrameGeneration, Vulkan) failed, code " + std::to_string(rc)); }
 
     // generated frame -> image B (UNDEFINED -> TRANSFER_DST -> PRESENT_SRC); A back to PRESENT_SRC
     VkImgBarrier(s.cb, B, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -1466,7 +1512,9 @@ static VKAPI_ATTR VkResult VKAPI_CALL VkHookQueuePresent(VkQueue queue, const Vk
     VkSubmitInfo si{}; si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     si.waitSemaphoreCount = (uint32_t)waits.size(); si.pWaitSemaphores = waits.data(); si.pWaitDstStageMask = stages.data();
     si.commandBufferCount = 1; si.pCommandBuffers = &s.cb; si.signalSemaphoreCount = 2; si.pSignalSemaphores = signals;
-    if (g_vf.queueSubmit(queue, 1, &si, s.fence) != VK_SUCCESS)
+    const VkResult submitResult = g_vf.queueSubmit(queue, 1, &si, s.fence);
+    fgLock.unlock();
+    if (submitResult != VK_SUCCESS)
     {
         g_handledFrame = frame; g_statSkipped++;
         return orig(queue, pi);         // our submit failed: the original waits are still unconsumed
@@ -1574,6 +1622,7 @@ static void ShutdownDevice()
         for (auto& s : g_dx.hookSlots) s = DxSlot{};
         for (auto& s : g_dx.prepSlots) s = DxSlot{};
     }
+    g_fgReady = false;
     if (g_fg && g_ffxDestroy)
     {
         g_ffxDestroy(&g_fg, nullptr);
@@ -1581,6 +1630,7 @@ static void ShutdownDevice()
     }
     if (IsVulkan())
         VkDestroyOwnResources();
+    g_ownVram = 0;
     g_state = kFgIdle;
 }
 
@@ -1590,7 +1640,7 @@ static void UNITY_INTERFACE_API OnRenderEvent(int eventId, void* data)
     {
         std::lock_guard<std::mutex> lock(g_fgMutex);
         DestroyFgContext();
-        g_preparedFrame = 0; g_handledFrame = 0; g_frameId = 0;
+        g_preparedFrame = 0; g_handledFrame = 0; g_frameId = 0; g_lastFrameIndex = 0;
         if (g_state.load() == kFgActive) g_state = kFgIdle;
         return;
     }
@@ -1602,6 +1652,15 @@ static void UNITY_INTERFACE_API OnRenderEvent(int eventId, void* data)
     {
         std::lock_guard<std::mutex> lock(g_stateMutex);
         if (!g_cfg.enabled) return;
+    }
+    // There is one present per engine frame, so only one prepare per engine frame can be paired with it. A second upscaled
+    // camera in the same frame (split-screen, a camera rendering into a texture) is ignored. Without this its prepare waited
+    // for a present that could not have happened yet, and five such frames switched frame generation to Stalled.
+    if (p.frameIndex != 0)
+    {
+        if (p.frameIndex == g_lastFrameIndex)
+            return;
+        g_lastFrameIndex = p.frameIndex;
     }
     if (!LoadAmdLoader()) { g_state = kFgDllMissing; return; }
     if (IsD3D12()) DxPrepare(p); else VkPrepare(p);
@@ -1714,7 +1773,7 @@ FG_EXPORT void FG_GetStats(FGStats* out)
     out->prepared = g_statPrepared.load();
     out->generated = g_statGenerated.load();
     out->skipped = g_statSkipped.load();
-    out->vramBytes = g_vram.load() + (g_dx.width && g_dx.height ? 2ull * g_dx.width * g_dx.height * 4ull : 0ull);
+    out->vramBytes = g_vram.load() + g_ownVram.load();
     out->baseFrameMs = g_baseFrameMs.load();
     out->lastHookMs = g_lastHookMs.load();
 }
@@ -1726,6 +1785,18 @@ FG_EXPORT int FG_GetLastMessage(char* buf, int capacity)
     if (!buf || capacity <= 0) return (int)g_lastMessage.size();
     const int n = std::min<int>((int)g_lastMessage.size(), capacity - 1);
     std::memcpy(buf, g_lastMessage.data(), n);
+    buf[n] = 0;
+    return n;
+}
+
+// Provider version name of the frame-generation context (UTF-8, NUL terminated), e.g. "3.1.x". Empty until a
+// context exists. Lets the game report which frame generation is actually running instead of assuming one.
+FG_EXPORT int FG_GetProviderVersion(char* buf, int capacity)
+{
+    std::lock_guard<std::mutex> lock(g_stateMutex);
+    if (!buf || capacity <= 0) return (int)g_fgProvider.size();
+    const int n = std::min<int>((int)g_fgProvider.size(), capacity - 1);
+    std::memcpy(buf, g_fgProvider.data(), n);
     buf[n] = 0;
     return n;
 }

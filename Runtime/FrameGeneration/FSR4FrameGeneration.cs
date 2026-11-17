@@ -64,6 +64,9 @@ namespace AchiraStudio.FSR4.FrameGeneration
         static string s_Message = "";
         static FGConfig s_LastPushed;
         static bool s_HavePushed;
+        static Camera s_SourceCamera;
+        static int s_LastPrepareFrame = -1;
+        static bool s_WarnedMultiCamera;
 
         /// <summary>Requested state. Frame generation only runs when this is true and <see cref="state"/> becomes Active.</summary>
         public static bool enabled
@@ -93,6 +96,17 @@ namespace AchiraStudio.FSR4.FrameGeneration
         {
             get => s_Debug;
             set { s_Debug = value; if (s_Available) PushConfig(false); }
+        }
+
+        /// <summary>
+        /// The camera whose depth and motion vectors drive frame generation. Null (the default) means the first camera that is
+        /// upscaled in each frame. Frame generation interpolates the whole backbuffer from one camera's data, so set this when
+        /// more than one camera is upscaled, for example a camera that renders into a texture next to the main camera.
+        /// </summary>
+        public static Camera sourceCamera
+        {
+            get => s_SourceCamera;
+            set => s_SourceCamera = value;
         }
 
         /// <summary>False when the native plugin is missing / unsupported (e.g. wrong graphics API). See <see cref="statusMessage"/>.</summary>
@@ -129,6 +143,15 @@ namespace AchiraStudio.FSR4.FrameGeneration
 
         public static string backendName => s_Available ? FGNative.BackendName() : "none";
 
+        /// <summary>
+        /// Version name of the frame-generation provider that is actually running, as reported by FidelityFX. Empty until
+        /// generation has started, and always empty with an FSR4FrameGen.dll built before this query existed (rebuild it).
+        /// </summary>
+        public static string providerInUse => s_Available ? FGNative.ProviderVersion() : string.Empty;
+
+        /// <summary>True once the native plugin has been probed. Lets UI avoid loading it just to draw a status line.</summary>
+        internal static bool initialised => s_Initialised;
+
         // ------------------------------------------------------------------------------------------------------
         static void Initialise()
         {
@@ -144,9 +167,11 @@ namespace AchiraStudio.FSR4.FrameGeneration
         {
             // Domain reload can be disabled in the Editor: reset all static state so a new play session starts clean.
             s_Enabled = false; s_Initialised = false; s_Available = false; s_HavePushed = false; s_Message = "";
+            s_SourceCamera = null; s_LastPrepareFrame = -1; s_WarnedMultiCamera = false;
 
             FSR4Hooks.UpscaleDispatched -= OnUpscaleDispatched;
             FSR4Hooks.UpscaleDispatched += OnUpscaleDispatched;
+            FSR4HudSections.Register(FSR4FrameGenHudSection.instance);   // shown by the optional debug HUD module, if present
 
             foreach (string arg in Environment.GetCommandLineArgs())
                 if (string.Equals(arg, "-fsr4-framegen", StringComparison.OrdinalIgnoreCase))
@@ -191,6 +216,24 @@ namespace AchiraStudio.FSR4.FrameGeneration
             Initialise();
             if (!s_Available)
                 return;
+
+            // The swapchain is presented once per frame, so exactly one camera can feed frame generation per frame. A second
+            // prepare in the same frame used to wait for a present that had not happened yet and stalled the module.
+            if (s_SourceCamera != null && f.camera != s_SourceCamera)
+                return;
+            int frameIndex = Time.frameCount;
+            if (frameIndex == s_LastPrepareFrame)
+            {
+                if (!s_WarnedMultiCamera)
+                {
+                    s_WarnedMultiCamera = true;
+                    Debug.LogWarning("[FSR4 FrameGen] More than one camera was upscaled in the same frame. Frame generation uses the first one; " +
+                                     "set FSR4FrameGeneration.sourceCamera to choose which camera drives it.");
+                }
+                return;
+            }
+            s_LastPrepareFrame = frameIndex;
+
             PushConfig(false);   // picks up HDR output changes
 
             uint flags = 0;
@@ -213,6 +256,7 @@ namespace AchiraStudio.FSR4.FrameGeneration
                 cameraNear = f.cameraNear, cameraFar = f.cameraFar, cameraFovY = f.cameraFovY,
                 viewSpaceToMeters = 1f,
                 camPos = f.cameraPosition, camUp = f.cameraUp, camRight = f.cameraRight, camForward = f.cameraForward,
+                frameIndex = frameIndex,
                 depth = f.depth, motionVectors = f.motionVectors,
             };
             FGNative.Prepare(cmd, in p);

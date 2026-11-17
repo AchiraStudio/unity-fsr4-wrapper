@@ -124,7 +124,7 @@ namespace AchiraStudio.FSR4
             }
             catch (DllNotFoundException e)
             {
-                error = "FSR4UnityPlugin.dll was not found - build it (see Native~/README.md) and copy it next to the AMD DLLs. " + e.Message;
+                error = "FSR4UnityPlugin.dll was not found - build it (see Documentation~/Building-the-native-plugins.md) and copy it next to the AMD DLLs. " + e.Message;
                 return false;
             }
             catch (EntryPointNotFoundException e)
