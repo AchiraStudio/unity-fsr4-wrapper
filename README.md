@@ -432,6 +432,7 @@ FidelityFX normally replaces the engine's swapchain, which Unity's plugin API do
 | Symptom | What to try |
 |---|---|
 | Nothing happens | Read the `[FSR4]` warning in the Console. It names the cause: wrong graphics API, missing DLL, or a failed probe. `FSR4Stats.notReadyReason` holds the same text. |
+| Pink or black image, or no upscaling on some GPUs | The upscaler fails over automatically (FSR 4 > FSR 3.1 > FSR 2.3 > automatic) and, if nothing works, disables itself so URP shows its normal image. Look for `[FSR4] ... failed on this machine` in the log, or read `FSR4Upscaler.runtimeFailureReason`. Test the paths with `-fsr4-simulate-failure[=probe\|all]`. |
 | Upscaler is selected but the image is not upscaled | Turn MSAA off in the URP asset. `FSR4Stats.skipReason` reports why a pass was skipped. |
 | Shimmer or a doubled image while the camera is still | Enable **Invert Jitter**. |
 | Ghosting trails | Check that every moving object writes motion vectors. Enable **Debug Checking** to have FidelityFX validate its inputs; its messages go to the debugger output (a debugger or Sysinternals DebugView shows them). |
