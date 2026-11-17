@@ -1,0 +1,4 @@
+[FSR4] Failure simulation is ON (mode 1: 1 = first provider fails its probe, 2 = every provider fails, 3 = first provider fails on the render thread).
+[FSR4] Probed FSR 3.x: OK (96 ms)
+[FSR4] Context active. Provider in use: 3.1.6
+[Showcase] Pipeline upscaler: AMD FSR 4 (Custom Wrapper)  wrapper active: True

@@ -44,7 +44,13 @@ namespace FSRShowcase
             Instance = this;
             Settings = ShowcaseSettings.Load();
             foreach (string a in System.Environment.GetCommandLineArgs())
+            {
                 if (a == "-fsr-run") { Persist = false; Settings = new ShowcaseSettings { fov = 55f }; }
+                // -fsr-reset: ignore and clear the saved settings (recovery from a bad saved combination).
+                // -fsr-safe: start with plain Unity upscaling (STP) and no FSR or frame generation, whatever was saved.
+                if (a == "-fsr-reset") { PlayerPrefs.DeleteKey("fsrshowcase.settings.v1"); Settings = new ShowcaseSettings(); }
+                if (a == "-fsr-safe") { Settings.legacyUpscalers = true; Settings.legacyKind = LegacyUpscaler.STP; Settings.frameGen = false; Settings.hudless = false; }
+            }
         }
 
         IEnumerator Start()
@@ -184,9 +190,20 @@ namespace FSRShowcase
             }
         }
 
+        bool m_FellBack;
+
         void Update()
         {
             if (!m_Ready) return;
+
+            // The wrapper can give up at runtime (every FSR provider failed on this GPU). It then records no pass, so apply the
+            // settings again: GraphicsController sees the failure and switches to Unity's STP at the same render scale.
+            if (!m_FellBack && FSR4Upscaler.hasFailed)
+            {
+                m_FellBack = true;
+                Debug.LogWarning("[Showcase] FSR is unavailable on this machine (" + FSR4Upscaler.runtimeFailureReason + "). Falling back to STP.");
+                GraphicsController.Apply(Settings, false);
+            }
 
             var kb = Keyboard.current;
             if (kb != null && !AutomationControlsCamera)

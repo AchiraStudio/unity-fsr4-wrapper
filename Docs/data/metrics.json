@@ -1,0 +1,272 @@
+{
+ "matrix_vista_fsr4_0": {
+  "providerInUse": "4.1.2",
+  "render": "1920x1080",
+  "display": "1920x1080",
+  "fps": 199.7,
+  "psnrVsNative": 22.75
+ },
+ "matrix_vista_fsr4_1": {
+  "providerInUse": "4.1.2",
+  "render": "1280x720",
+  "display": "1920x1080",
+  "fps": 199.6,
+  "psnrVsNative": 23.36
+ },
+ "matrix_vista_fsr4_2": {
+  "providerInUse": "4.1.2",
+  "render": "1129x635",
+  "display": "1920x1080",
+  "fps": 206.1,
+  "psnrVsNative": 24.28
+ },
+ "matrix_vista_fsr4_3": {
+  "providerInUse": "4.1.2",
+  "render": "960x540",
+  "display": "1920x1080",
+  "fps": 188.7,
+  "psnrVsNative": 22.12
+ },
+ "matrix_vista_fsr4_4": {
+  "providerInUse": "4.1.2",
+  "render": "640x360",
+  "display": "1920x1080",
+  "fps": 192.2,
+  "psnrVsNative": 22.79
+ },
+ "matrix_vista_fsr3_0": {
+  "providerInUse": "3.1.6",
+  "render": "1920x1080",
+  "display": "1920x1080",
+  "fps": 173.1,
+  "psnrVsNative": 21.8
+ },
+ "matrix_vista_fsr3_1": {
+  "providerInUse": "3.1.6",
+  "render": "1280x720",
+  "display": "1920x1080",
+  "fps": 164.0,
+  "psnrVsNative": 24.08
+ },
+ "matrix_vista_fsr3_2": {
+  "providerInUse": "3.1.6",
+  "render": "1129x635",
+  "display": "1920x1080",
+  "fps": 162.2,
+  "psnrVsNative": 22.67
+ },
+ "matrix_vista_fsr3_3": {
+  "providerInUse": "3.1.6",
+  "render": "960x540",
+  "display": "1920x1080",
+  "fps": 146.7,
+  "psnrVsNative": 25.37
+ },
+ "matrix_vista_fsr3_4": {
+  "providerInUse": "3.1.6",
+  "render": "640x360",
+  "display": "1920x1080",
+  "fps": 194.7,
+  "psnrVsNative": 25.88
+ },
+ "matrix_vista_fsr2_0": {
+  "providerInUse": "2.3.4",
+  "render": "1920x1080",
+  "display": "1920x1080",
+  "fps": 193.9,
+  "psnrVsNative": 22.76
+ },
+ "matrix_vista_fsr2_1": {
+  "providerInUse": "2.3.4",
+  "render": "1280x720",
+  "display": "1920x1080",
+  "fps": 185.2,
+  "psnrVsNative": 23.34
+ },
+ "matrix_vista_fsr2_2": {
+  "providerInUse": "2.3.4",
+  "render": "1129x635",
+  "display": "1920x1080",
+  "fps": 159.1,
+  "psnrVsNative": 22.43
+ },
+ "matrix_vista_fsr2_3": {
+  "providerInUse": "2.3.4",
+  "render": "960x540",
+  "display": "1920x1080",
+  "fps": 180.8,
+  "psnrVsNative": 22.9
+ },
+ "matrix_vista_fsr2_4": {
+  "providerInUse": "2.3.4",
+  "render": "640x360",
+  "display": "1920x1080",
+  "fps": 179.6,
+  "psnrVsNative": 22.79
+ },
+ "matrix_vista_native_taa": {
+  "fps": 194.9,
+  "render": "1920x1080",
+  "psnrVsNative": null
+ },
+ "matrix_vista_legacy_STP_67": {
+  "fps": 185.1,
+  "render": "1286x724",
+  "psnrVsNative": 22.77
+ },
+ "matrix_vista_legacy_STP_50": {
+  "fps": 201.5,
+  "render": "960x540",
+  "psnrVsNative": 22.78
+ },
+ "matrix_vista_legacy_FSR1Spatial_67": {
+  "fps": 199.7,
+  "render": "1286x724",
+  "psnrVsNative": 24.58
+ },
+ "matrix_vista_legacy_FSR1Spatial_50": {
+  "fps": 197.8,
+  "render": "960x540",
+  "psnrVsNative": 24.73
+ },
+ "matrix_vista_legacy_Bilinear_50": {
+  "fps": 200.5,
+  "render": "960x540",
+  "psnrVsNative": 25.11
+ },
+ "matrix_foliage_fsr4_0": {
+  "providerInUse": "4.1.2",
+  "render": "1920x1080",
+  "display": "1920x1080",
+  "fps": 205.8,
+  "psnrVsNative": 24.0
+ },
+ "matrix_foliage_fsr4_1": {
+  "providerInUse": "4.1.2",
+  "render": "1280x720",
+  "display": "1920x1080",
+  "fps": 201.9,
+  "psnrVsNative": 24.76
+ },
+ "matrix_foliage_fsr4_2": {
+  "providerInUse": "4.1.2",
+  "render": "1129x635",
+  "display": "1920x1080",
+  "fps": 201.2,
+  "psnrVsNative": 23.06
+ },
+ "matrix_foliage_fsr4_3": {
+  "providerInUse": "4.1.2",
+  "render": "960x540",
+  "display": "1920x1080",
+  "fps": 197.3,
+  "psnrVsNative": 24.51
+ },
+ "matrix_foliage_fsr4_4": {
+  "providerInUse": "4.1.2",
+  "render": "640x360",
+  "display": "1920x1080",
+  "fps": 201.0,
+  "psnrVsNative": 22.85
+ },
+ "matrix_foliage_fsr3_0": {
+  "providerInUse": "3.1.6",
+  "render": "1920x1080",
+  "display": "1920x1080",
+  "fps": 208.6,
+  "psnrVsNative": 25.37
+ },
+ "matrix_foliage_fsr3_1": {
+  "providerInUse": "3.1.6",
+  "render": "1280x720",
+  "display": "1920x1080",
+  "fps": 197.4,
+  "psnrVsNative": 25.31
+ },
+ "matrix_foliage_fsr3_2": {
+  "providerInUse": "3.1.6",
+  "render": "1129x635",
+  "display": "1920x1080",
+  "fps": 210.8,
+  "psnrVsNative": 25.72
+ },
+ "matrix_foliage_fsr3_3": {
+  "providerInUse": "3.1.6",
+  "render": "960x540",
+  "display": "1920x1080",
+  "fps": 210.3,
+  "psnrVsNative": 25.63
+ },
+ "matrix_foliage_fsr3_4": {
+  "providerInUse": "3.1.6",
+  "render": "640x360",
+  "display": "1920x1080",
+  "fps": 229.6,
+  "psnrVsNative": 24.09
+ },
+ "matrix_foliage_fsr2_0": {
+  "providerInUse": "2.3.4",
+  "render": "1920x1080",
+  "display": "1920x1080",
+  "fps": 225.2,
+  "psnrVsNative": 24.0
+ },
+ "matrix_foliage_fsr2_1": {
+  "providerInUse": "2.3.4",
+  "render": "1280x720",
+  "display": "1920x1080",
+  "fps": 236.9,
+  "psnrVsNative": 23.82
+ },
+ "matrix_foliage_fsr2_2": {
+  "providerInUse": "2.3.4",
+  "render": "1129x635",
+  "display": "1920x1080",
+  "fps": 236.5,
+  "psnrVsNative": 24.56
+ },
+ "matrix_foliage_fsr2_3": {
+  "providerInUse": "2.3.4",
+  "render": "960x540",
+  "display": "1920x1080",
+  "fps": 230.3,
+  "psnrVsNative": 24.78
+ },
+ "matrix_foliage_fsr2_4": {
+  "providerInUse": "2.3.4",
+  "render": "640x360",
+  "display": "1920x1080",
+  "fps": 241.7,
+  "psnrVsNative": 25.2
+ },
+ "matrix_foliage_native_taa": {
+  "fps": 215.7,
+  "render": "1920x1080",
+  "psnrVsNative": null
+ },
+ "matrix_foliage_legacy_STP_67": {
+  "fps": 244.8,
+  "render": "1286x724",
+  "psnrVsNative": 25.54
+ },
+ "matrix_foliage_legacy_STP_50": {
+  "fps": 244.0,
+  "render": "960x540",
+  "psnrVsNative": 25.16
+ },
+ "matrix_foliage_legacy_FSR1Spatial_67": {
+  "fps": 242.2,
+  "render": "1286x724",
+  "psnrVsNative": 25.67
+ },
+ "matrix_foliage_legacy_FSR1Spatial_50": {
+  "fps": 243.9,
+  "render": "960x540",
+  "psnrVsNative": 26.09
+ },
+ "matrix_foliage_legacy_Bilinear_50": {
+  "fps": 246.1,
+  "render": "960x540",
+  "psnrVsNative": 26.24
+ }
+}

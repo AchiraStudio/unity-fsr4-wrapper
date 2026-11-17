@@ -1,0 +1,7 @@
+[FSR4] Failure simulation is ON (mode 3: 1 = first provider fails its probe, 2 = every provider fails, 3 = first provider fails on the render thread).
+[FSR4] Native context creation failed: ffxCreateContext failed, code 4
+[FSR4] (simulated bad provider) failed on this machine (ffxCreateContext failed, code 4). Switching to the next provider.
+[FSR4] Probed FSR 3.x: OK (239 ms)
+[FSR4] Context active. Provider in use: 3.1.6
+[Showcase] Pipeline upscaler: AMD FSR 4 (Custom Wrapper)  wrapper active: True
+[FSR4] Context active. Provider in use: 4.1.2

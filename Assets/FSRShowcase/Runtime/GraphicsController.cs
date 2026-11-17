@@ -12,6 +12,9 @@ namespace FSRShowcase
     {
         public const string WrapperId = "achirastudio.fsr4";
 
+        /// <summary>Shader loop iterations at 100% synthetic GPU load.</summary>
+        public const int GpuLoadMaxIterations = 4000;
+
         public static UniversalRenderPipelineAsset Asset => GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
         public static UniversalRenderPipeline Pipeline => RenderPipelineManager.currentPipeline as UniversalRenderPipeline;
         public static FSR4Options WrapperOptions => Asset != null ? Asset.GetUpscalerOptions(WrapperId) as FSR4Options : null;
@@ -48,6 +51,7 @@ namespace FSRShowcase
             QualitySettings.vSyncCount = (s.vsync == 1 && !wantFrameGen) ? 1 : 0;
             Application.targetFrameRate = s.frameCap <= 0 ? -1 : s.frameCap;
 
+            GpuLoadFeature.Iterations = Mathf.RoundToInt(Mathf.Max(0f, s.gpuLoad) * GpuLoadMaxIterations);   // the menu slider stops at 1, scripts may go higher
             ApplyUpscaling(s);
             ApplyFrameGeneration(s, wantFrameGen);
             ApplyAdvanced(s);

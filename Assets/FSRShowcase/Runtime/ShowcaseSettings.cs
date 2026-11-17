@@ -49,6 +49,7 @@ namespace FSRShowcase
         public bool showPerfOverlay = true;
         public bool showDebugHud;
         public HudTestKind hudTest = HudTestKind.Off;
+        public float gpuLoad;            // 0..1 synthetic GPU load at render resolution (test aid, see GpuLoadFeature)
 
         const string Key = "fsrshowcase.settings.v1";
 

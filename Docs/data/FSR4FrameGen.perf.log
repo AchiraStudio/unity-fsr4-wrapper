@@ -1,0 +1,302 @@
+no mode file (looked for FSR4FrameGen.mode and FSR4FrameGen.mode.txt next to the DLL)
+diagnostic mode = 0
+hook installed: swapchain=0000025FBC993E70 vtbl=00007FFCA67442A0 origPresent=00007FFCA66784C0 (dxgi.dll+0x84c0) origPresent1=00007FFCA66789A0 (dxgi.dll+0x89a0)
+frame-generation context created: provider '4.0.2', display 1920x1080, max render 1280x720
+prepare frame 1: ffxDispatch(PrepareV2) rc=0 render=1280x720 depth=0000025F8ABA9A60 mv=0000026009698420
+  [check] after prepare: GetDeviceRemovedReason = 0x00000000
+Present1 #1 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=1 handled=0
+  generate frame 1: begin (mode 0, device reason at entry 0x00000000)
+  textures ok 1920x1080 fmt=28; backbuffer A=0000025F8AB43200 idx=0
+  [check] after list 1 (copy + generate + copy back): GetDeviceRemovedReason = 0x00000000
+  list 1 submitted, generated=1
+  presenting first frame
+  first present returned 0x00000000
+  [check] after list 2 (real frame -> next backbuffer): GetDeviceRemovedReason = 0x00000000
+  list 2 submitted (real frame -> next backbuffer), presenting real frame
+  second present returned 0x00000000 (backbuffer index now 2)
+  index-preserving presents done (3 buffers): index now 1, hr 0x00000000
+prepare frame 2: ffxDispatch(PrepareV2) rc=0 render=1280x720 depth=0000025F8ABA9A60 mv=0000026009698420
+  [check] after prepare: GetDeviceRemovedReason = 0x00000000
+Present1 #2 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=2 handled=1
+  generate frame 2: begin (mode 0, device reason at entry 0x00000000)
+  textures ok 1920x1080 fmt=28; backbuffer A=0000025F8AB3F2D0 idx=1
+  [check] after list 1 (copy + generate + copy back): GetDeviceRemovedReason = 0x00000000
+  list 1 submitted, generated=1
+  presenting first frame
+  first present returned 0x00000000
+  [check] after list 2 (real frame -> next backbuffer): GetDeviceRemovedReason = 0x00000000
+  list 2 submitted (real frame -> next backbuffer), presenting real frame
+  second present returned 0x00000000 (backbuffer index now 0)
+  index-preserving presents done (3 buffers): index now 2, hr 0x00000000
+prepare frame 3: ffxDispatch(PrepareV2) rc=0 render=1280x720 depth=0000025F8ABA9A60 mv=0000026009698420
+  [check] after prepare: GetDeviceRemovedReason = 0x00000000
+Present1 #3 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=3 handled=2
+  generate frame 3: begin (mode 0, device reason at entry 0x00000000)
+  textures ok 1920x1080 fmt=28; backbuffer A=0000025F8AB41CF0 idx=2
+  [check] after list 1 (copy + generate + copy back): GetDeviceRemovedReason = 0x00000000
+  list 1 submitted, generated=1
+  presenting first frame
+  first present returned 0x00000000
+  [check] after list 2 (real frame -> next backbuffer): GetDeviceRemovedReason = 0x00000000
+  list 2 submitted (real frame -> next backbuffer), presenting real frame
+  second present returned 0x00000000 (backbuffer index now 1)
+  index-preserving presents done (3 buffers): index now 0, hr 0x00000000
+prepare frame 4: ffxDispatch(PrepareV2) rc=0 render=1280x720 depth=0000025F8ABA9A60 mv=0000026009698420
+  [check] after prepare: GetDeviceRemovedReason = 0x00000000
+Present1 #4 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=4 handled=3
+  generate frame 4: begin (mode 0, device reason at entry 0x00000000)
+  textures ok 1920x1080 fmt=28; backbuffer A=0000025F8AB43200 idx=0
+  [check] after list 1 (copy + generate + copy back): GetDeviceRemovedReason = 0x00000000
+  list 1 submitted, generated=1
+  presenting first frame
+  first present returned 0x00000000
+  [check] after list 2 (real frame -> next backbuffer): GetDeviceRemovedReason = 0x00000000
+  list 2 submitted (real frame -> next backbuffer), presenting real frame
+  second present returned 0x00000000 (backbuffer index now 2)
+  index-preserving presents done (3 buffers): index now 1, hr 0x00000000
+prepare frame 5: ffxDispatch(PrepareV2) rc=0 render=1280x720 depth=0000025F8ABA9A60 mv=0000026009698420
+  [check] after prepare: GetDeviceRemovedReason = 0x00000000
+Present1 #5 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=5 handled=4
+  generate frame 5: begin (mode 0, device reason at entry 0x00000000)
+  textures ok 1920x1080 fmt=28; backbuffer A=0000025F8AB3F2D0 idx=1
+  [check] after list 1 (copy + generate + copy back): GetDeviceRemovedReason = 0x00000000
+  list 1 submitted, generated=1
+  presenting first frame
+  first present returned 0x00000000
+  [check] after list 2 (real frame -> next backbuffer): GetDeviceRemovedReason = 0x00000000
+  list 2 submitted (real frame -> next backbuffer), presenting real frame
+  second present returned 0x00000000 (backbuffer index now 0)
+  index-preserving presents done (3 buffers): index now 2, hr 0x00000000
+prepare frame 6: ffxDispatch(PrepareV2) rc=0 render=1280x720 depth=0000025F8ABA9A60 mv=0000026009698420
+  [check] after prepare: GetDeviceRemovedReason = 0x00000000
+Present1 #6 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=6 handled=5
+  generate frame 6: begin (mode 0, device reason at entry 0x00000000)
+  textures ok 1920x1080 fmt=28; backbuffer A=0000025F8AB41CF0 idx=2
+  [check] after list 1 (copy + generate + copy back): GetDeviceRemovedReason = 0x00000000
+  list 1 submitted, generated=1
+  presenting first frame
+  first present returned 0x00000000
+  [check] after list 2 (real frame -> next backbuffer): GetDeviceRemovedReason = 0x00000000
+  list 2 submitted (real frame -> next backbuffer), presenting real frame
+  second present returned 0x00000000 (backbuffer index now 1)
+  index-preserving presents done (3 buffers): index now 0, hr 0x00000000
+  [check] after prepare: GetDeviceRemovedReason = 0x00000000
+Present1 #7 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=7 handled=6
+  generate frame 7: begin (mode 0, device reason at entry 0x00000000)
+  textures ok 1920x1080 fmt=28; backbuffer A=0000025F8AB43200 idx=0
+  list 1 submitted, generated=1
+  presenting first frame
+  first present returned 0x00000000
+  list 2 submitted (real frame -> next backbuffer), presenting real frame
+  second present returned 0x00000000 (backbuffer index now 2)
+  index-preserving presents done (3 buffers): index now 1, hr 0x00000000
+Present1 #8 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=8 handled=7
+  generate frame 8: begin (mode 0, device reason at entry 0x00000000)
+  textures ok 1920x1080 fmt=28; backbuffer A=0000025F8AB3F2D0 idx=1
+  list 1 submitted, generated=1
+  presenting first frame
+  first present returned 0x00000000
+  list 2 submitted (real frame -> next backbuffer), presenting real frame
+  second present returned 0x00000000 (backbuffer index now 0)
+  index-preserving presents done (3 buffers): index now 2, hr 0x00000000
+Present1 #9 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=9 handled=8
+  generate frame 9: begin (mode 0, device reason at entry 0x00000000)
+  textures ok 1920x1080 fmt=28; backbuffer A=0000025F8AB41CF0 idx=2
+  list 1 submitted, generated=1
+  presenting first frame
+  first present returned 0x00000000
+  list 2 submitted (real frame -> next backbuffer), presenting real frame
+  second present returned 0x00000000 (backbuffer index now 1)
+  index-preserving presents done (3 buffers): index now 0, hr 0x00000000
+Present1 #10 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=10 handled=9
+  generate frame 10: begin (mode 0, device reason at entry 0x00000000)
+  textures ok 1920x1080 fmt=28; backbuffer A=0000025F8AB43200 idx=0
+  list 1 submitted, generated=1
+  presenting first frame
+  first present returned 0x00000000
+  list 2 submitted (real frame -> next backbuffer), presenting real frame
+  second present returned 0x00000000 (backbuffer index now 2)
+  index-preserving presents done (3 buffers): index now 1, hr 0x00000000
+Present1 #11 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=11 handled=10
+  generate frame 11: begin (mode 0, device reason at entry 0x00000000)
+  textures ok 1920x1080 fmt=28; backbuffer A=0000025F8AB3F2D0 idx=1
+  list 1 submitted, generated=1
+  presenting first frame
+  first present returned 0x00000000
+  list 2 submitted (real frame -> next backbuffer), presenting real frame
+  second present returned 0x00000000 (backbuffer index now 0)
+  index-preserving presents done (3 buffers): index now 2, hr 0x00000000
+Present1 #12 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=12 handled=11
+  generate frame 12: begin (mode 0, device reason at entry 0x00000000)
+  textures ok 1920x1080 fmt=28; backbuffer A=0000025F8AB41CF0 idx=2
+  list 1 submitted, generated=1
+  presenting first frame
+  first present returned 0x00000000
+  list 2 submitted (real frame -> next backbuffer), presenting real frame
+  second present returned 0x00000000 (backbuffer index now 1)
+  index-preserving presents done (3 buffers): index now 0, hr 0x00000000
+Present1 #13 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=13 handled=12
+Present1 #14 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=14 handled=13
+Present1 #15 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=15 handled=14
+Present1 #16 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=16 handled=15
+Present1 #17 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=17 handled=16
+Present1 #18 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=18 handled=17
+Present1 #19 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=19 handled=18
+Present1 #20 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=20 handled=19
+Present1 #21 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=21 handled=20
+Present1 #22 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=22 handled=21
+Present1 #23 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=23 handled=22
+Present1 #24 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=24 handled=23
+Present1 #25 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=25 handled=24
+Present1 #26 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=26 handled=25
+Present1 #27 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=27 handled=26
+Present1 #28 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=28 handled=27
+Present1 #29 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=29 handled=28
+Present1 #30 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=30 handled=29
+Present1 #31 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=31 handled=30
+Present1 #32 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=32 handled=31
+Present1 #33 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=33 handled=32
+Present1 #34 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=34 handled=33
+Present1 #35 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=35 handled=34
+Present1 #36 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=36 handled=35
+Present1 #37 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=37 handled=36
+Present1 #38 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=38 handled=37
+Present1 #39 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=39 handled=38
+Present1 #40 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=40 handled=39
+Present1 #41 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=41 handled=40
+Present1 #42 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=42 handled=41
+Present1 #43 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=43 handled=42
+Present1 #44 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=44 handled=43
+Present1 #45 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=45 handled=44
+Present1 #46 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=46 handled=45
+Present1 #47 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=47 handled=46
+Present1 #48 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=48 handled=47
+Present1 #49 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=49 handled=48
+Present1 #50 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=50 handled=49
+Present1 #51 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=51 handled=50
+Present1 #52 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=52 handled=51
+Present1 #53 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=53 handled=52
+Present1 #54 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=54 handled=53
+Present1 #55 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=55 handled=54
+Present1 #56 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=56 handled=55
+Present1 #57 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=57 handled=56
+Present1 #58 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=58 handled=57
+Present1 #59 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=59 handled=58
+Present1 #60 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=60 handled=59
+Present1 #61 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=61 handled=60
+Present1 #62 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=62 handled=61
+Present1 #63 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=63 handled=62
+Present1 #64 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=64 handled=63
+Present1 #65 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=65 handled=64
+Present1 #66 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=66 handled=65
+Present1 #67 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=67 handled=66
+Present1 #68 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=68 handled=67
+Present1 #69 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=69 handled=68
+Present1 #70 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=70 handled=69
+Present1 #71 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=71 handled=70
+Present1 #72 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=72 handled=71
+Present1 #73 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=73 handled=72
+Present1 #74 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=74 handled=73
+Present1 #75 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=75 handled=74
+Present1 #76 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=76 handled=75
+Present1 #77 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=77 handled=76
+Present1 #78 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=78 handled=77
+Present1 #79 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=79 handled=78
+Present1 #80 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=80 handled=79
+Present1 #81 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=81 handled=80
+Present1 #82 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=82 handled=81
+Present1 #83 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=83 handled=82
+Present1 #84 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=84 handled=83
+Present1 #85 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=85 handled=84
+Present1 #86 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=86 handled=85
+Present1 #87 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=87 handled=86
+Present1 #88 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=88 handled=87
+Present1 #89 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=89 handled=88
+Present1 #90 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=90 handled=89
+Present1 #91 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=91 handled=90
+Present1 #92 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=92 handled=91
+Present1 #93 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=93 handled=92
+Present1 #94 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=94 handled=93
+Present1 #95 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=95 handled=94
+Present1 #96 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=96 handled=95
+Present1 #97 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=97 handled=96
+Present1 #98 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=98 handled=97
+Present1 #99 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=99 handled=98
+Present1 #100 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=100 handled=99
+Present1 #101 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=101 handled=100
+Present1 #102 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=102 handled=101
+Present1 #103 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=103 handled=102
+Present1 #104 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=104 handled=103
+Present1 #105 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=105 handled=104
+Present1 #106 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=106 handled=105
+Present1 #107 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=107 handled=106
+Present1 #108 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=108 handled=107
+Present1 #109 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=109 handled=108
+Present1 #110 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=110 handled=109
+Present1 #111 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=111 handled=110
+Present1 #112 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=112 handled=111
+Present1 #113 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=113 handled=112
+Present1 #114 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=114 handled=113
+Present1 #115 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=115 handled=114
+Present1 #116 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=116 handled=115
+Present1 #117 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=117 handled=116
+Present1 #118 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=118 handled=117
+Present1 #119 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=119 handled=118
+Present1 #120 self=0000025FBC993E70 sync=0 flags=0x200 tid=22680 generate=1 prepared=120 handled=119
+perf (240 frames): real 95.3 fps (10.50 ms, 7.02 ms without our waits) | hook avg 8.76 ms, pacing wait avg 3.72 ms, fence wait avg 0.19 ms | pacing=1
+perf (240 frames): real 86.2 fps (11.60 ms, 8.05 ms without our waits) | hook avg 8.51 ms, pacing wait avg 3.47 ms, fence wait avg 0.00 ms | pacing=1
+frame-generation context created: provider '4.0.2', display 1920x1080, max render 1280x720
+perf (240 frames): real 99.8 fps (10.02 ms, 6.71 ms without our waits) | hook avg 7.90 ms, pacing wait avg 3.37 ms, fence wait avg 0.02 ms | pacing=1
+perf (240 frames): real 99.9 fps (10.01 ms, 6.70 ms without our waits) | hook avg 7.81 ms, pacing wait avg 3.34 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 99.1 fps (10.09 ms, 6.76 ms without our waits) | hook avg 7.86 ms, pacing wait avg 3.36 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 99.5 fps (10.06 ms, 6.72 ms without our waits) | hook avg 7.86 ms, pacing wait avg 3.46 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 99.7 fps (10.03 ms, 6.74 ms without our waits) | hook avg 7.78 ms, pacing wait avg 3.35 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 85.7 fps (11.66 ms, 8.24 ms without our waits) | hook avg 7.98 ms, pacing wait avg 3.39 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 96.4 fps (10.37 ms, 10.36 ms without our waits) | hook avg 7.92 ms, pacing wait avg 2.53 ms, fence wait avg 0.00 ms | pacing=0
+perf (240 frames): real 96.4 fps (10.37 ms, 10.37 ms without our waits) | hook avg 8.08 ms, pacing wait avg 0.00 ms, fence wait avg 0.00 ms | pacing=0
+perf (240 frames): real 96.6 fps (10.35 ms, 10.35 ms without our waits) | hook avg 7.98 ms, pacing wait avg 0.00 ms, fence wait avg 0.00 ms | pacing=0
+perf (240 frames): real 98.4 fps (10.16 ms, 10.16 ms without our waits) | hook avg 7.88 ms, pacing wait avg 0.00 ms, fence wait avg 0.00 ms | pacing=0
+perf (240 frames): real 98.7 fps (10.13 ms, 7.12 ms without our waits) | hook avg 7.86 ms, pacing wait avg 0.25 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 100.7 fps (9.93 ms, 6.65 ms without our waits) | hook avg 7.74 ms, pacing wait avg 3.24 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 108.9 fps (9.18 ms, 6.15 ms without our waits) | hook avg 7.64 ms, pacing wait avg 3.20 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 112.0 fps (8.93 ms, 5.97 ms without our waits) | hook avg 6.98 ms, pacing wait avg 2.97 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 112.4 fps (8.90 ms, 5.95 ms without our waits) | hook avg 6.95 ms, pacing wait avg 2.97 ms, fence wait avg 0.00 ms | pacing=1
+frame-generation context created: provider '4.0.2', display 1920x1080, max render 960x540
+perf (240 frames): real 121.9 fps (8.20 ms, 5.49 ms without our waits) | hook avg 6.89 ms, pacing wait avg 2.87 ms, fence wait avg 0.02 ms | pacing=1
+perf (240 frames): real 120.8 fps (8.28 ms, 5.53 ms without our waits) | hook avg 6.74 ms, pacing wait avg 2.70 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 120.3 fps (8.31 ms, 5.57 ms without our waits) | hook avg 6.78 ms, pacing wait avg 2.71 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 121.0 fps (8.26 ms, 5.52 ms without our waits) | hook avg 6.75 ms, pacing wait avg 2.72 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 119.2 fps (8.39 ms, 5.62 ms without our waits) | hook avg 6.82 ms, pacing wait avg 2.77 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 118.7 fps (8.42 ms, 5.66 ms without our waits) | hook avg 6.85 ms, pacing wait avg 2.83 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 119.6 fps (8.36 ms, 5.59 ms without our waits) | hook avg 6.80 ms, pacing wait avg 2.76 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 120.5 fps (8.30 ms, 5.56 ms without our waits) | hook avg 6.82 ms, pacing wait avg 2.76 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 120.2 fps (8.32 ms, 5.57 ms without our waits) | hook avg 6.81 ms, pacing wait avg 2.75 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 99.0 fps (10.10 ms, 7.35 ms without our waits) | hook avg 6.86 ms, pacing wait avg 2.88 ms, fence wait avg 0.00 ms | pacing=1
+frame-generation context created: provider '4.0.2', display 1920x1080, max render 960x540
+perf (240 frames): real 122.1 fps (8.19 ms, 5.47 ms without our waits) | hook avg 6.82 ms, pacing wait avg 2.81 ms, fence wait avg 0.01 ms | pacing=1
+perf (240 frames): real 121.1 fps (8.26 ms, 5.54 ms without our waits) | hook avg 6.79 ms, pacing wait avg 2.71 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 120.9 fps (8.27 ms, 5.53 ms without our waits) | hook avg 6.77 ms, pacing wait avg 2.71 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 120.7 fps (8.28 ms, 5.58 ms without our waits) | hook avg 6.78 ms, pacing wait avg 2.71 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 118.0 fps (8.47 ms, 5.62 ms without our waits) | hook avg 6.80 ms, pacing wait avg 2.81 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 120.4 fps (8.31 ms, 5.57 ms without our waits) | hook avg 6.79 ms, pacing wait avg 2.74 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 119.6 fps (8.36 ms, 5.60 ms without our waits) | hook avg 6.80 ms, pacing wait avg 2.75 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 120.1 fps (8.33 ms, 5.57 ms without our waits) | hook avg 6.75 ms, pacing wait avg 2.75 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 120.9 fps (8.27 ms, 5.54 ms without our waits) | hook avg 6.78 ms, pacing wait avg 2.75 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 117.7 fps (8.49 ms, 5.68 ms without our waits) | hook avg 6.84 ms, pacing wait avg 2.81 ms, fence wait avg 0.00 ms | pacing=1
+frame-generation context created: provider '4.0.2', display 1920x1080, max render 960x540
+perf (240 frames): real 118.6 fps (8.43 ms, 5.64 ms without our waits) | hook avg 6.84 ms, pacing wait avg 2.84 ms, fence wait avg 0.01 ms | pacing=1
+perf (240 frames): real 121.7 fps (8.22 ms, 5.50 ms without our waits) | hook avg 6.77 ms, pacing wait avg 2.72 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 121.4 fps (8.24 ms, 5.52 ms without our waits) | hook avg 6.76 ms, pacing wait avg 2.71 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 121.1 fps (8.25 ms, 5.54 ms without our waits) | hook avg 6.77 ms, pacing wait avg 2.71 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 120.2 fps (8.32 ms, 5.55 ms without our waits) | hook avg 6.78 ms, pacing wait avg 2.80 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 119.5 fps (8.37 ms, 5.62 ms without our waits) | hook avg 6.72 ms, pacing wait avg 2.72 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 119.6 fps (8.36 ms, 5.61 ms without our waits) | hook avg 6.77 ms, pacing wait avg 2.75 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 118.7 fps (8.43 ms, 5.67 ms without our waits) | hook avg 6.76 ms, pacing wait avg 2.74 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 118.4 fps (8.45 ms, 5.66 ms without our waits) | hook avg 6.82 ms, pacing wait avg 2.77 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 118.3 fps (8.45 ms, 5.65 ms without our waits) | hook avg 6.87 ms, pacing wait avg 2.85 ms, fence wait avg 0.00 ms | pacing=1
+frame-generation context created: provider '4.0.2', display 1920x1080, max render 1280x720
+perf (240 frames): real 108.8 fps (9.19 ms, 6.32 ms without our waits) | hook avg 6.82 ms, pacing wait avg 2.81 ms, fence wait avg 0.01 ms | pacing=1
+perf (240 frames): real 113.0 fps (8.85 ms, 5.92 ms without our waits) | hook avg 7.53 ms, pacing wait avg 3.04 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 111.4 fps (8.98 ms, 5.98 ms without our waits) | hook avg 7.29 ms, pacing wait avg 2.94 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 111.8 fps (8.95 ms, 5.98 ms without our waits) | hook avg 7.30 ms, pacing wait avg 2.94 ms, fence wait avg 0.00 ms | pacing=1
+perf (240 frames): real 109.2 fps (9.16 ms, 6.13 ms without our waits) | hook avg 7.38 ms, pacing wait avg 3.00 ms, fence wait avg 0.00 ms | pacing=1

@@ -102,7 +102,8 @@ def matrix(pname, title):
     C = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(C)
     d.text((24, 22), title, font=font(30, True), fill=INK)
-    d.text((24, 62), "Oasis scene, 1920x1080 output, camera static, 100+ frames of temporal convergence before capture.  PSNR is measured against native resolution with TAA.",
+    d.text((24, 62), "Oasis scene, 1920x1080 output, static camera, 100+ frames of temporal convergence. PSNR is against native + TAA and is only a rough guide (different AA and jitter), so judge by eye. "
+           "fps here is CPU-bound and noisy: see the GPU-bound charts.",
            font=font(15), fill=MUTED)
     for qi, q in enumerate(quals):
         d.text((left + qi * (tw + 6) + 8, top - 30), q, font=font(20, True), fill=ACC)
@@ -142,14 +143,14 @@ def detail(pname, box, title, scale=4):
     """Zoomed crops of the same region across configurations (nearest neighbour so pixels stay honest)."""
     sets = [
         ("Native (TAA)", f"matrix_{pname}_native_taa"),
-        ("FSR 3.1 Quality", f"matrix_{pname}_fsr3_1"),
-        ("FSR 3.1 Balanced", f"matrix_{pname}_fsr3_2"),
+        ("FSR 4 Quality", f"matrix_{pname}_fsr4_1"),
+        ("FSR 4 Performance", f"matrix_{pname}_fsr4_3"),
+        ("FSR 4 Ultra Perf.", f"matrix_{pname}_fsr4_4"),
         ("FSR 3.1 Performance", f"matrix_{pname}_fsr3_3"),
         ("FSR 3.1 Ultra Perf.", f"matrix_{pname}_fsr3_4"),
         ("FSR 2.3 Performance", f"matrix_{pname}_fsr2_3"),
         ("FSR 2.3 Ultra Perf.", f"matrix_{pname}_fsr2_4"),
-        ("STP @ 50%", f"matrix_{pname}_legacy_STP_50"),
-        ("FSR 1.0 @ 50%", f"matrix_{pname}_legacy_FSR1Spatial_50"),
+        ("Unity STP @ 50%", f"matrix_{pname}_legacy_STP_50"),
         ("Bilinear @ 50%", f"matrix_{pname}_legacy_Bilinear_50"),
     ]
     x, y, w, h = box
@@ -158,7 +159,7 @@ def detail(pname, box, title, scale=4):
     rows = 2
     Cn = Image.new("RGB", (cols * (cw + 6), 70 + rows * (ch + 6)), BG)
     ImageDraw.Draw(Cn).text((14, 16), title, font=font(26, True), fill=INK)
-    ImageDraw.Draw(Cn).text((14, 48), f"crop {w}x{h} px at ({x},{y}), shown {scale / 2:.0f}x", font=font(14), fill=MUTED)
+    ImageDraw.Draw(Cn).text((14, 48), f"crop {w}x{h} px at ({x},{y}), shown {scale / 2:.1f}x", font=font(14), fill=MUTED)
     for i, (name, id_) in enumerate(sets):
         im = load(id_)
         if im is None:
@@ -183,15 +184,108 @@ def wipe(a_id, b_id, name_a, name_b, out_name, frac=0.5):
 
 
 def split_screen():
-    ids = [("split_fsr3_q1", "Quality"), ("split_fsr3_q3", "Performance"), ("split_fsr3_q4", "Ultra Performance"), ("split_stp_067", "STP 67% (control)")]
-    tw = 940
+    ids = [("split_native_taa", "Native (TAA)"), ("split_fsr3_q1", "FSR 3.1 Quality"), ("split_fsr3_q2", "FSR 3.1 Balanced"),
+           ("split_fsr3_q3", "FSR 3.1 Performance"), ("split_fsr3_q4", "FSR 3.1 Ultra Performance"), ("split_stp_067", "Unity STP 67% (control)")]
+    tw = 626
     th = int(tw * 9 / 16)
-    Cn = Image.new("RGB", (tw * 2 + 6, th * 2 + 6), BG)
+    Cn = Image.new("RGB", (tw * 3 + 12, th * 2 + 6), BG)
     for i, (id_, name) in enumerate(ids):
         e = E.get(id_, {})
-        lines = [f"Split-screen, FSR 3.1 {name}" if "fsr3" in id_ else f"Split-screen, {name}", (e.get("notes") or "")[:140]]
-        Cn.paste(tile(id_, tw, lines), ((i % 2) * (tw + 6), (i // 2) * (th + 6)))
+        views = (e.get("notes") or "")
+        n_views = e.get("views", 0)
+        l2 = f'{e.get("renderRes","")} -> {e.get("displayRes","")}  |  {e.get("avgFps",0):.0f} fps  |  FSR views: {n_views}'
+        Cn.paste(tile(id_, tw, [f"Split-screen: {name}", l2]), ((i % 3) * (tw + 6), (i // 3) * (th + 6)))
     Cn.save(os.path.join(OUT, "splitscreen.jpg"), quality=90)
+
+
+def bars(title, subtitle, groups, fname, width=1500, unit="fps", note=None):
+    """Grouped horizontal-free bar chart drawn with PIL. groups = [(group_label, [(bar_label, value, colour)])]."""
+    n_bars = sum(len(g[1]) for g in groups)
+    mx = max(v for g in groups for _, v, _ in g[1]) * 1.12 or 1
+    row_h, gap = 26, 18
+    top = 110
+    H = top + n_bars * row_h + len(groups) * (gap + 26) + 50
+    Cn = Image.new("RGB", (width, H), BG)
+    d = ImageDraw.Draw(Cn)
+    d.text((24, 20), title, font=font(28, True), fill=INK)
+    d.text((24, 62), subtitle, font=font(15), fill=MUTED)
+    left = 330
+    y = top
+    for label, bs in groups:
+        d.text((24, y), label, font=font(18, True), fill=ACC)
+        y += 26
+        for bl, v, col in bs:
+            w = int((width - left - 120) * v / mx)
+            d.text((24 + 14, y + 2), bl, font=font(15), fill=INK)
+            d.rectangle([left, y + 3, left + w, y + row_h - 5], fill=col)
+            d.text((left + w + 8, y + 2), f"{v:.0f} {unit}", font=font(15, True), fill=INK)
+            y += row_h
+        y += gap
+    if note:
+        d.text((24, H - 34), note, font=font(14), fill=MUTED)
+    Cn.save(os.path.join(OUT, fname), quality=92)
+
+
+COL = {"native": (150, 150, 150), "fsr4": (242, 166, 90), "fsr3": (110, 170, 230), "fsr2": (140, 205, 140), "stp": (200, 130, 200), "fsr1": (210, 190, 110)}
+
+
+def perf_charts():
+    qn = ["Native AA", "Quality", "Balanced", "Performance", "Ultra Performance"]
+    if "perf_native_taa" not in E:
+        return
+    base = E["perf_native_taa"]["avgFps"]
+    groups = [("Native resolution", [("Native 1920x1080 (TAA)", base, COL["native"])])]
+    for g in (4, 3, 2):
+        bs = []
+        for q in range(5):
+            e = E.get(f"perf_fsr{g}_{q}")
+            if e:
+                bs.append((f"{qn[q]}  {e['renderRes']}  x{e['avgFps'] / base:.2f}", e["avgFps"], COL[f"fsr{g}"]))
+        provider = (E.get(f"perf_fsr{g}_1", {}).get("providerInUse") or "")
+        groups.append((f"FSR {g}  (provider {provider})", bs))
+    bs = []
+    for k, sc, nm in [("STP", 67, "Unity STP"), ("STP", 50, "Unity STP"), ("FSR1Spatial", 50, "FSR 1.0 spatial")]:
+        e = E.get(f"perf_legacy_{k}_{sc}")
+        if e:
+            bs.append((f"{nm} @ {sc}%  x{e['avgFps'] / base:.2f}", e["avgFps"], COL["stp"] if k == "STP" else COL["fsr1"]))
+    groups.append(("Legacy upscalers", bs))
+    bars("Performance by upscaler and quality mode, GPU-bound",
+         "Oasis, 1920x1080 output, synthetic render-resolution GPU load (native = about 40 fps). Average over 4 s. x = speed-up over native.",
+         groups, "perf_modes.png", note="The load runs at render resolution, so it shrinks with the quality mode like a heavy game's shading cost would. Without it this scene is CPU-bound at 1080p.")
+
+    # split-screen
+    sp = [("perf_split_native_taa", "Native (TAA)", COL["native"]), ("perf_split_fsr4_1", "FSR 4 Quality", COL["fsr4"]),
+          ("perf_split_fsr4_3", "FSR 4 Performance", COL["fsr4"]), ("perf_split_fsr4_4", "FSR 4 Ultra Performance", COL["fsr4"])]
+    bs = [(f"{n}  {E[i]['renderRes']}  x{E[i]['avgFps'] / E['perf_split_native_taa']['avgFps']:.2f}", E[i]["avgFps"], c) for i, n, c in sp if i in E]
+    if bs:
+        bars("Split-screen performance (two views, one FSR context each)", "Same GPU load as above; each half is 960x1080 output.",
+             [("Two cameras, side by side", bs)], "perf_split.png", width=1500)
+
+    # frame generation
+    if "perf_fg_off" in E and "perf_fg_on" in E:
+        off, on = E["perf_fg_off"], E["perf_fg_on"]
+        npc = E.get("perf_fg_on_nopacing")
+        bs = [("Frame generation off  (rendered)", off["renderedFps"], COL["fsr4"]),
+              ("On, pacing on: presented", on["renderedFps"] + on["generatedFps"], COL["fsr3"])]
+        if npc:
+            bs.append(("On, pacing off: presented", npc["renderedFps"] + npc["generatedFps"], COL["fsr3"]))
+        bs.append(("On, pacing on: rendered only", on["renderedFps"], COL["native"]))
+        bars("Frame generation, GPU-bound", "FSR 4 Quality (1280x720 -> 1920x1080). Presented = rendered + generated frames per second.",
+             [("Frames per second", bs)], "perf_framegen.png", width=1500)
+
+
+def cpu_bound_chart():
+    """The 1080p matrix without synthetic load: every mode sits near the same frame rate (CPU-bound)."""
+    ref = E.get("matrix_vista_native_taa")
+    if not ref:
+        return
+    groups = [("Native", [("Native (TAA)", ref["avgFps"], COL["native"])])]
+    qn = ["Native AA", "Quality", "Balanced", "Performance", "Ultra Performance"]
+    for g in (4, 3, 2):
+        bs = [(qn[q], E[f"matrix_vista_fsr{g}_{q}"]["avgFps"], COL[f"fsr{g}"]) for q in range(5) if f"matrix_vista_fsr{g}_{q}" in E]
+        groups.append((f"FSR {g}", bs))
+    bars("Same scene without the synthetic load: CPU-bound at 1080p",
+         "Sunset vista, 1920x1080. Quality modes cannot raise the frame rate when the GPU is not the limit.", groups, "perf_cpu_bound.png", width=1500)
 
 
 def hud_grid():
@@ -222,5 +316,20 @@ if __name__ == "__main__":
     for pname, title in (("vista", "FSR quality matrix: sunset vista"), ("foliage", "FSR quality matrix: foliage close-up")):
         if f"matrix_{pname}_native_taa" in E:
             matrix(pname, title)
+    split_screen()
+    perf_charts()
+    cpu_bound_chart()
+    if "matrix_foliage_native_taa" in E:
+        detail("foliage", (880, 440, 320, 180), "Detail crops: thin grass and palm leaves (foliage view)", scale=3)
+
+    # settings menu contact sheet
+    tabs = [("menu_display", "Display"), ("menu_upscaling", "Upscaling"), ("menu_framegen", "Frame generation"),
+            ("menu_advanced", "Advanced graphics"), ("menu_overlays", "Overlays and testing")]
+    tw = 626
+    th = int(tw * 9 / 16)
+    S = Image.new("RGB", (tw * 3 + 12, th * 2 + 6), BG)
+    for i, (id_, name) in enumerate(tabs):
+        S.paste(tile(id_, tw, [f"Settings menu: {name}"]), ((i % 3) * (tw + 6), (i // 3) * (th + 6)))
+    S.save(os.path.join(OUT, "menu_sheet.jpg"), quality=90)
     json.dump(metrics, open(os.path.join(OUT, "metrics.json"), "w"), indent=1)
     print("composed ->", OUT)

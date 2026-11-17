@@ -1,5 +1,14 @@
 {
   "dependencies": {
+    "com.achirastudio.fsr4": {
+      "version": "https://github.com/AchiraStudio/unity-fsr4-wrapper.git#beta",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.render-pipelines.universal": "17.6.0"
+      },
+      "hash": "c0a717be8f998e69ac23941f09560eee5026cbfe"
+    },
     "com.unity.bindings.openimageio": {
       "version": "1.0.2",
       "depth": 1,

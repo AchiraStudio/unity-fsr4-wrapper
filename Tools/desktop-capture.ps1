@@ -12,16 +12,31 @@
 #>
 param(
     [Parameter(Mandatory = $true)][string]$OutDir,
-    [int]$TimeoutSeconds = 3600
+    [int]$TimeoutSeconds = 3600,
+    [string]$ProcessName = "FSRShowcase"
 )
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 Add-Type @"
+using System;
 using System.Runtime.InteropServices;
 public static class Dpi { [DllImport("user32.dll")] public static extern bool SetProcessDPIAware(); }
+public static class Win {
+    [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
+    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int cmd);
+}
 "@
 [void][Dpi]::SetProcessDPIAware()
+
+# A desktop capture grabs whatever is on top. Keep the Player window topmost so the capture is the game, not another window.
+function Keep-OnTop {
+    $p = Get-Process -Name $ProcessName -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
+    if ($p) {
+        [void][Win]::ShowWindow($p.MainWindowHandle, 9)                                   # SW_RESTORE
+        [void][Win]::SetWindowPos($p.MainWindowHandle, [IntPtr](-1), 0, 0, 0, 0, 0x0003)  # HWND_TOPMOST, no move/size
+    }
+}
 
 $ext = Join-Path $OutDir "ext"
 New-Item -ItemType Directory -Force -Path $ext | Out-Null
@@ -46,6 +61,8 @@ while ((Get-Date) -lt $deadline) {
         $parts = (Get-Content $req.FullName -Raw).Trim().Split(',')
         $count = [int]$parts[0]
         $interval = [double]::Parse($parts[1], [System.Globalization.CultureInfo]::InvariantCulture)
+        Keep-OnTop
+        Start-Sleep -Milliseconds 150
         for ($i = 0; $i -lt $count; $i++) {
             Grab (Join-Path $ext ("{0}_{1:00}.png" -f $name, $i))
             Start-Sleep -Milliseconds ([int]($interval * 1000))

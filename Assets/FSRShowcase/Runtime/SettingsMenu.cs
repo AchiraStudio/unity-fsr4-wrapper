@@ -263,6 +263,7 @@ namespace FSRShowcase
             Section(p, "TESTING");
             Selector(p, "HUD stress test", kHudTest, () => (int)Pending.hudTest, i => Pending.hudTest = (HudTestKind)i,
                      null, "Animated HUD elements used to look for ghosting with FSR and frame generation.");
+            Slider(p, "Synthetic GPU load", 0f, 1f, () => Pending.gpuLoad, v => Pending.gpuLoad = v, "P0", "", null, 100f);
             Switch(p, "Split-screen (2 views)", () => getSplitScreen != null && getSplitScreen(), v => setSplitScreen?.Invoke(v),
                    "Two base cameras, each with its own FSR context. Applies immediately.");
         }

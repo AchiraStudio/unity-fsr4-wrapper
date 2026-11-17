@@ -79,9 +79,19 @@ namespace FSRShowcase
             m_Report.vramMb = SystemInfo.graphicsMemorySize.ToString();
 
             m_C.TakeCameraControl();
+            // -fsr-res 3840x2160 runs the whole script at another output resolution (default 1920x1080).
+            int resW = 1920, resH = 1080;
+            var cmd = Environment.GetCommandLineArgs();
+            for (int i = 0; i < cmd.Length - 1; i++)
+            {
+                if (cmd[i] != "-fsr-res") continue;
+                var parts = cmd[i + 1].ToLowerInvariant().Split('x');
+                if (parts.Length == 2 && int.TryParse(parts[0], out int rw) && int.TryParse(parts[1], out int rh)) { resW = rw; resH = rh; }
+            }
             m_Base = new ShowcaseSettings
             {
-                width = 1920, height = 1080, displayMode = 0, vsync = 0, frameCap = 0, fov = 55f,
+                // borderless when the output fits the desktop, a normal window when it is larger (then Windows lets it overhang)
+                width = resW, height = resH, displayMode = resW > Display.main.systemWidth ? 2 : 0, vsync = 0, frameCap = 0, fov = 55f,
                 upscalingEnabled = true, legacyUpscalers = false, fsrGeneration = FsrGeneration.FSR3, quality = 1,
                 frameGen = false, showPerfOverlay = true, showDebugHud = false, hudTest = HudTestKind.Off,
             };
@@ -109,6 +119,7 @@ namespace FSRShowcase
                     case "framegen": step = FrameGen(); break;
                     case "hud": step = Hud(); break;
                     case "menu": step = MenuTour(); break;
+                    case "perf": step = Perf(); break;
                 }
                 if (step != null)
                 {
@@ -160,13 +171,15 @@ namespace FSRShowcase
 
                 foreach (FsrGeneration gen in new[] { FsrGeneration.FSR4, FsrGeneration.FSR3, FsrGeneration.FSR2 })
                 {
+                    // ids use the FSR major version (fsr4 / fsr3 / fsr2), not the enum value
+                    int major = gen == FsrGeneration.FSR4 ? 4 : gen == FsrGeneration.FSR3 ? 3 : 2;
                     for (int q = 0; q < 5; q++)
                     {
                         var s = m_Base.Clone();
                         s.fsrGeneration = gen; s.quality = q;
                         m_C.ApplyFromCode(s);
                         yield return Settle(2.5f, 100);
-                        yield return Capture($"matrix_{pname}_fsr{(int)gen}_{q}", $"matrix-{pname}", $"{gen} / {qn[q]}", s);
+                        yield return Capture($"matrix_{pname}_fsr{major}_{q}", $"matrix-{pname}", $"FSR {major} / {qn[q]}", s, measureSeconds: 3f);
                     }
                 }
 
@@ -180,6 +193,82 @@ namespace FSRShowcase
                     yield return Capture($"matrix_{pname}_legacy_{kind}_{Mathf.RoundToInt(scale * 100)}", $"matrix-{pname}", $"Legacy {kind} @ {scale:P0}", s);
                 }
             }
+        }
+
+        /// <summary>
+        /// Performance under a GPU-bound frame. At 1080p this scene is CPU-limited (see the matrix), so the quality modes cannot show their
+        /// gain there. This step adds the synthetic render-resolution load (-fsr-load 0..1, default 0.4) and measures every mode, frame
+        /// generation with and without pacing, and split-screen.
+        /// </summary>
+        IEnumerator Perf()
+        {
+            float load = 0.4f;
+            var cmd = Environment.GetCommandLineArgs();
+            for (int i = 0; i < cmd.Length - 1; i++)
+                if (cmd[i] == "-fsr-load" && float.TryParse(cmd[i + 1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float l)) load = l;
+            Log($"perf: synthetic GPU load {load:0.00} ({Mathf.RoundToInt(load * GraphicsController.GpuLoadMaxIterations)} iterations per pixel)");
+
+            string[] qn = { "Native AA", "Quality", "Balanced", "Performance", "Ultra Performance" };
+            m_C.PoseCamera(0);
+
+            var n = m_Base.Clone(); n.upscalingEnabled = false; n.gpuLoad = load;
+            m_C.ApplyFromCode(n);
+            yield return Settle(3f, 100);
+            yield return Capture("perf_native_taa", "perf", "Native (TAA)", n, measureSeconds: 4f);
+
+            foreach (FsrGeneration gen in new[] { FsrGeneration.FSR4, FsrGeneration.FSR3, FsrGeneration.FSR2 })
+            {
+                int major = gen == FsrGeneration.FSR4 ? 4 : gen == FsrGeneration.FSR3 ? 3 : 2;
+                for (int q = 0; q < 5; q++)
+                {
+                    var s = m_Base.Clone(); s.fsrGeneration = gen; s.quality = q; s.gpuLoad = load;
+                    m_C.ApplyFromCode(s);
+                    yield return Settle(2.5f, 100);
+                    yield return Capture($"perf_fsr{major}_{q}", "perf", $"FSR {major} / {qn[q]}", s, measureSeconds: 4f);
+                }
+            }
+            foreach (var (kind, scale) in new[] { (LegacyUpscaler.STP, 0.67f), (LegacyUpscaler.STP, 0.5f), (LegacyUpscaler.FSR1Spatial, 0.5f) })
+            {
+                var s = m_Base.Clone(); s.legacyUpscalers = true; s.legacyKind = kind; s.renderScale = scale; s.gpuLoad = load;
+                m_C.ApplyFromCode(s);
+                yield return Settle(2.5f, 100);
+                yield return Capture($"perf_legacy_{kind}_{Mathf.RoundToInt(scale * 100)}", "perf", $"Legacy {kind} @ {scale:P0}", s, measureSeconds: 4f);
+            }
+
+            // frame generation: off, on with pacing, on without pacing (FSR 4, Quality)
+            var f = m_Base.Clone(); f.fsrGeneration = FsrGeneration.FSR4; f.quality = 1; f.gpuLoad = load; f.showPerfOverlay = true;
+            m_C.ApplyFromCode(f);
+            yield return Settle(3f, 100);
+            yield return Capture("perf_fg_off", "perf-fg", "Frame generation off", f, measureSeconds: 5f);
+            f.frameGen = true; f.pacing = true;
+            m_C.ApplyFromCode(f);
+            yield return Settle(5f, 150);
+            yield return Capture("perf_fg_on", "perf-fg", "Frame generation on (pacing on)", f, measureSeconds: 6f);
+            f.pacing = false;
+            m_C.ApplyFromCode(f);
+            yield return Settle(4f, 120);
+            yield return Capture("perf_fg_on_nopacing", "perf-fg", "Frame generation on (pacing off)", f, measureSeconds: 6f);
+            f.frameGen = false; f.pacing = true;
+            m_C.ApplyFromCode(f);
+            yield return Settle(3f, 90);
+
+            // split-screen: native vs FSR 4 modes, no frame generation
+            m_C.SetSplitScreen(true);
+            var sn = m_Base.Clone(); sn.upscalingEnabled = false; sn.gpuLoad = load;
+            m_C.ApplyFromCode(sn);
+            yield return Settle(3f, 100);
+            yield return Capture("perf_split_native_taa", "perf-split", "Split-screen / native (TAA)", sn, measureSeconds: 4f);
+            foreach (int q in new[] { 1, 3, 4 })
+            {
+                var s = m_Base.Clone(); s.fsrGeneration = FsrGeneration.FSR4; s.quality = q; s.gpuLoad = load;
+                m_C.ApplyFromCode(s);
+                yield return Settle(3f, 100);
+                yield return Capture($"perf_split_fsr4_{q}", "perf-split", $"Split-screen / FSR 4 {qn[q]}", s, measureSeconds: 4f);
+            }
+            m_C.SetSplitScreen(false);
+            var back = m_Base.Clone();
+            m_C.ApplyFromCode(back);
+            yield return Settle(1f, 30);
         }
 
         IEnumerator Motion()
@@ -229,12 +318,23 @@ namespace FSRShowcase
             yield return Settle(2.5f, 90);
 
             m_C.SetSplitScreen(true);
-            foreach (int q in new[] { 1, 3, 4 })
+
+            // control: two views, no upscaling (engine TAA at full resolution)
+            var nat = m_Base.Clone(); nat.upscalingEnabled = false;
+            m_C.ApplyFromCode(nat);
+            yield return Settle(3f, 120);
+            yield return Capture("split_native_taa", "splitscreen", "Split-screen / native (TAA)", nat, measureSeconds: 3f);
+
+            foreach (int q in new[] { 0, 1, 2, 3, 4 })
             {
                 s.quality = q;
                 m_C.ApplyFromCode(s);
                 yield return Settle(3f, 120);
+                float msSum = 0f; int msN = 0;
+                for (float t = 0f; t < 3f; ) { float dt = Time.unscaledDeltaTime; t += dt; msSum += dt; msN++; yield return null; }
                 var e = Describe($"split_fsr3_q{q}", "splitscreen", $"Split-screen / FSR 3 q{q}", s);
+                e.avgFrameMs = msN > 0 ? msSum / msN * 1000f : 0f;
+                e.avgFps = e.avgFrameMs > 0f ? 1000f / e.avgFrameMs : 0f;
                 yield return Shot(e.id);
                 e.file = e.id + ".png";
                 var views = new List<FSR4ViewStats>();
@@ -251,7 +351,7 @@ namespace FSRShowcase
             var l = m_Base.Clone(); l.legacyUpscalers = true; l.legacyKind = LegacyUpscaler.STP; l.renderScale = 0.67f;
             m_C.ApplyFromCode(l);
             yield return Settle(2.5f, 90);
-            yield return Capture("split_stp_067", "splitscreen", "Split-screen / STP 67%", l);
+            yield return Capture("split_stp_067", "splitscreen", "Split-screen / STP 67%", l, measureSeconds: 3f);
 
             // frame generation requested while split: expected to pause
             s.quality = 1; s.frameGen = true;
@@ -278,6 +378,14 @@ namespace FSRShowcase
             yield return Settle(5f, 150);
             yield return Capture("fg_on", "framegen", "Frame generation on", s, measureSeconds: 8f);
             yield return ExternalCapture("fg_on_desktop", 6, 0.25f);
+
+            // Pacing waits half a frame interval on the render thread so generated and real frames are evenly spaced. When the
+            // render thread is the bottleneck that wait is not hidden, so compare with pacing off.
+            s.pacing = false;
+            m_C.ApplyFromCode(s);
+            yield return Settle(4f, 120);
+            yield return Capture("fg_on_nopacing", "framegen", "Frame generation on, pacing off", s, measureSeconds: 6f);
+            s.pacing = true;
 
             s.hudless = true;
             m_C.ApplyFromCode(s);
