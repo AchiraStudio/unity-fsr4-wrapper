@@ -18,10 +18,10 @@ namespace AchiraStudio.FSR4
 #endif
     static class RegisterFSR4
     {
-        static RegisterFSR4() => UpscalerRegistry.Register<FSR4Upscaler, FSR4Options>(FSR4Upscaler.upscalerName);
+        static RegisterFSR4() => FSR4Upscaler.RegisterWithFramework();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        static void InitRuntime() => UpscalerRegistry.Register<FSR4Upscaler, FSR4Options>(FSR4Upscaler.upscalerName);
+        static void InitRuntime() => FSR4Upscaler.RegisterWithFramework();
     }
 
     /// <summary>Managed handle for one native ffx context (the native side creates it lazily on the render thread).</summary>
@@ -71,6 +71,26 @@ namespace AchiraStudio.FSR4
     public class FSR4Upscaler : AbstractUpscaler
     {
         public static readonly string upscalerName = "AMD FSR 4 (Custom Wrapper)";
+
+        /// <summary>
+        /// Stable identifier serialized by the URP asset. Used by the Upscaler Framework in URP 17.7 (Unity 6.7) and newer;
+        /// never change it once shipped.
+        /// </summary>
+        public static readonly string upscalerIdentifier = "achirastudio.fsr4";
+
+        /// <summary>
+        /// Registers the upscaler with the framework. Unity 6.6 (URP 17.6) registers by display name only; Unity 6.7
+        /// (URP 17.7) registers by stable id plus display name and requires <c>AbstractUpscaler.upscalerId</c>.
+        /// <c>FSR4_UPSCALER_ID_API</c> is defined by this assembly's versionDefines for com.unity.render-pipelines.core >= 17.7.0.
+        /// </summary>
+        internal static void RegisterWithFramework()
+        {
+#if FSR4_UPSCALER_ID_API
+            UpscalerRegistry.Register<FSR4Upscaler, FSR4Options>(upscalerIdentifier, upscalerName);
+#else
+            UpscalerRegistry.Register<FSR4Upscaler, FSR4Options>(upscalerName);
+#endif
+        }
 
         class PassData
         {
@@ -163,6 +183,14 @@ namespace AchiraStudio.FSR4
             }
         }
 
+#if FSR4_UPSCALER_ID_API
+        public override string upscalerId => upscalerIdentifier;
+
+        // URP 17.7 walks the asset's upscaler priority list and picks the first upscaler that reports itself supported.
+        // Without this, a machine where the native plugin cannot start (Direct3D 11 Editor, missing DLL) would stay on this
+        // upscaler and render a degraded, point-filtered image instead of falling back to the next entry (for example STP).
+        public override bool isSupportedOnDevice => m_Ready;
+#endif
         public override string name => upscalerName;
         public override bool isTemporal => true;
         public override bool supportsSharpening => true;

@@ -14,6 +14,12 @@
     "defineConstraints": [
         "ENABLE_UPSCALER_FRAMEWORK"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.core",
+            "expression": "17.7.0",
+            "define": "FSR4_UPSCALER_ID_API"
+        }
+    ],
     "noEngineReferences": false
 }
