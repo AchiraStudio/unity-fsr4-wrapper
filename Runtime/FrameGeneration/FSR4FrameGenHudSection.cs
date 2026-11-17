@@ -13,6 +13,7 @@ namespace AchiraStudio.FSR4.FrameGeneration
 
         readonly FSR4FrameRateMeter m_Meter = new FSR4FrameRateMeter();
         bool m_Probed;
+        float m_NextRefresh;
         string m_Text = "";
 
         public string Title => "Frame generation";
@@ -33,11 +34,21 @@ namespace AchiraStudio.FSR4.FrameGeneration
             if (pacing != FSR4FrameGeneration.pacing)
                 FSR4FrameGeneration.pacing = pacing;
 
+            bool hudless = GUILayout.Toggle(FSR4FrameGeneration.hudless, " HUD-less input (experimental, D3D12, needs the renderer feature)");
+            if (hudless != FSR4FrameGeneration.hudless)
+                FSR4FrameGeneration.hudless = hudless;
+
             GUILayout.Label(m_Text);
         }
 
         void Refresh()
         {
+            // Rebuild the text four times per second, not on every IMGUI event (see FSR4DebugHud.Refresh).
+            float now = Time.unscaledTime;
+            if (now < m_NextRefresh)
+                return;
+            m_NextRefresh = now + 0.25f;
+
             // Do not load the native plugin just to say that frame generation is off.
             m_Probed = FSR4FrameGeneration.enabled || FSR4FrameGeneration.initialised;
             if (!m_Probed)
@@ -54,6 +65,8 @@ namespace AchiraStudio.FSR4.FrameGeneration
             var sb = new System.Text.StringBuilder(384);
             sb.Append("State: ").Append(state).Append("   Backend: ").Append(FSR4FrameGeneration.backendName).Append('\n');
             sb.Append("Provider: ").Append(string.IsNullOrEmpty(provider) ? "(not reported)" : provider).Append('\n');
+            if (FSR4FrameGeneration.pausedForSplitScreen)
+                sb.Append($"Paused: split-screen ({FSR4FrameGeneration.screenViewCount} views). Frames are presented without interpolation.\n");
             if (state != FSR4FrameGenState.Active)
             {
                 string message = FSR4FrameGeneration.statusMessage;
@@ -64,6 +77,8 @@ namespace AchiraStudio.FSR4.FrameGeneration
             sb.Append($"Frames: {s.preparedFrames} prepared, {s.generatedFrames} generated, {s.passedThroughFrames} passed through\n");
             sb.Append($"Real frame interval {s.baseFrameMs:0.00} ms   Present hook {s.lastPresentHookMs:0.00} ms (CPU)\n");
             sb.Append($"GPU memory {s.vramBytes / (1024.0 * 1024.0):0.0} MB");
+            if (FSR4FrameGeneration.hudless)
+                sb.Append("\nHUD-less input: ").Append(FSR4FrameGeneration.hudlessStatus).Append("  (").Append(FSR4FrameGeneration.hudlessFrames).Append(" frames)");
             if (s.lastFfxReturnCode != 0)
                 sb.Append($"\nLast FidelityFX error code: {s.lastFfxReturnCode}");
             m_Text = sb.ToString();

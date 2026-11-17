@@ -1,6 +1,13 @@
 # Changelog
 
 ## Unreleased
+- New: split-screen support. Upscaling already runs per camera in URP (one context and temporal history per view, sized to the viewport); the per-view state is now visible: `FSR4Stats.GetActiveViews`, a per-view list in the debug HUD and in the diagnostics report. Frame generation pauses while two or more base cameras share the screen (`FSR4FrameGeneration.pauseInSplitScreen`, `isSplitScreenDetected`, `screenViewCount`, `pausedForSplitScreen`, `splitScreenPausedFrames`; also a toggle on the Frame Generation Controller), because it interpolates the whole backbuffer from one camera's data. It resumes with a history reset. Interpolating a split-screen from composed inputs is not implemented.
+- Fixed (native): the Direct3D 12 upscaler's ring of command lists had 6 slots, which made a 4-view split-screen wait for the previous frame's GPU work. It has 16 now. Rebuild `FSR4UnityPlugin.dll`.
+- New (experimental): HUD-less input for frame generation, to reduce UI ghosting. The `FSR4HudlessFeature` URP renderer feature captures the frame before the overlay UI is drawn and hands it to FidelityFX (`HUDLessColor`) through a new `kEventHudless` plugin event. Direct3D 12 and SDR output only. Enable with `FSR4FrameGeneration.hudless`, the controller component, the debug HUD or `-fsr4-hudless`; `hudlessStatus` and `hudlessFrames` report what happens. Needs a rebuilt `FSR4FrameGen.dll` (an older DLL ignores the event and the status says so). Not run on hardware. The `AchiraStudio.FSR4.FrameGeneration` assembly now references the URP assemblies.
+- New: `FSR4DiagnosticsReport.Build()` (plain-text report for bug reports, extendable with `FSR4ReportSources`), 1% and 0.1% lows in the debug HUD, **Copy report** / **Save report** / **Run benchmark** buttons, and `FSR4Benchmark` (warm-up, fixed duration, CSV and JSON output, `-fsr4-benchmark` command line).
+- New: `FSR4FrameStatistics.Summarize` (average, median, worst, 1% and 0.1% lows).
+- Fixed: `FSR4FrameGenerationController.OnDisable` switched frame generation off even when another controller (or your own code) was driving it. Only the controller that last applied its settings turns it off now.
+- Not done on purpose: reactive / transparency mask inputs (FSR 4 ignores them, only the FSR 3.1 fallback would use them) and a rewrite of the Direct3D 12 extra-present path (risk of device removal without hardware to test on).
 - New: debug HUD module (`Runtime/DebugHud`, assembly `AchiraStudio.FSR4.DebugHud`): upscaler status, rendered frame rate, CPU / GPU frame time, frame-time graph, and the frame-generation block with separate rendered / generated / presented frame rates. Add the *AchiraStudio > FSR4 Debug HUD* component or start the Player with `-fsr4-hud`.
 - New: `FSR4FrameRateMeter` measures rendered and generated frames per second separately.
 - New: `FSR4FrameGeneration.providerInUse` reports which frame-generation provider is running (native export `FG_GetProviderVersion`).
@@ -9,7 +16,9 @@
 - Fixed: the present hooks read the frame-generation context without holding its mutex, and the context could be destroyed between the generate dispatch and the submission of its command list. The stall counter and the AMD loader are thread-safe now.
 - Fixed: `vramBytes` assumed 4 bytes per pixel (wrong for FP16 HDR backbuffers) and ignored the Vulkan textures.
 - Fixed: messages pointed at `Native~/README.md`, which does not exist.
-- Native: `FSR4FrameGen.dll` and `FSR4UnityPlugin.dll` must be rebuilt (`Native~/build.bat`) for the native fixes and `providerInUse`. No struct size changed, so the DLLs shipped with 0.2.0 keep loading; they just lack the native part of these changes.
+- Fixed: the debug HUD, and its frame-generation block, rebuilt their text on every IMGUI event and allocated garbage every frame. They refresh four times per second now.
+- Fixed: on Direct3D 12 the diagnostic `GetCurrentBackBufferIndex` hook was installed on every swapchain, although it only logs. It is now installed only when an `FSR4FrameGen.mode` file selects a diagnostic mode other than 0. (Native change: rebuild `FSR4FrameGen.dll`.)
+- Native: `FSR4FrameGen.dll` and `FSR4UnityPlugin.dll` must be rebuilt (`Native~/build.bat`) for the native fixes, `providerInUse`, the HUD-less input and the command-list ring. No struct size changed, so the DLLs shipped with 0.2.0 keep loading; they just lack the native part of these changes.
 
 ## 0.2.0
 - Package split into modules (Core upscaler / Frame generation / Debug HUD / Editor), each its own assembly; modules only meet through `FSR4Hooks` and `FSR4HudSections`.

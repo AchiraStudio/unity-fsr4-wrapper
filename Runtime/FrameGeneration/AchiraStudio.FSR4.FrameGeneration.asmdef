@@ -2,7 +2,9 @@
     "name": "AchiraStudio.FSR4.FrameGeneration",
     "rootNamespace": "AchiraStudio.FSR4.FrameGeneration",
     "references": [
-        "AchiraStudio.FSR4.Runtime"
+        "AchiraStudio.FSR4.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

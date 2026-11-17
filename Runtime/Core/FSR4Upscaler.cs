@@ -79,6 +79,7 @@ namespace AchiraStudio.FSR4
             public TextureHandle color, depth, motionVectors, output;
             public FSR4FrameData frame;
             public bool raiseFrameHook;
+            public int viewContextId;
         }
 
         // Best (highest) version id per FSR major generation, resolved once from the runtime's own version list so we never
@@ -269,6 +270,8 @@ namespace AchiraStudio.FSR4
 
             var options = io.options as FSR4Options;
             FSR4Stats.MarkRecorded(io.preUpscaleResolution, io.postUpscaleResolution, options, ResolveVersionId(options));
+            FSR4Stats.MarkView(context.nativeId, frameData.Contains<UniversalCameraData>() ? frameData.Get<UniversalCameraData>().camera : null,
+                               io.preUpscaleResolution, io.postUpscaleResolution);
 
             TextureHandle outputColor;
             {
@@ -315,6 +318,7 @@ namespace AchiraStudio.FSR4
                 float frameTimeMs = io.deltaTime > 0f ? io.deltaTime * 1000f : 16.6f;
 
                 pd.context = context;
+                pd.viewContextId = context.nativeId;
                 pd.p = new FSR4DispatchParams
                 {
                     contextId = context.nativeId,
@@ -415,6 +419,7 @@ namespace AchiraStudio.FSR4
 
                     FSR4Native.Dispatch(cmd, d.p);
                     FSR4Stats.dispatchesIssued++;
+                    FSR4Stats.MarkViewDispatched(d.viewContextId);
 
                     if (d.raiseFrameHook)
                     {

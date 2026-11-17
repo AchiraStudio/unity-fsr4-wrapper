@@ -117,7 +117,7 @@ The package never assumes which provider is running. The upscaler logs the provi
    https://github.com/AchiraStudio/unity-fsr4-wrapper.git
    ```
 
-To pin a release, append its tag, for example `...unity-fsr4-wrapper.git#v0.2.0`.
+To pin a release, append its tag, for example `...unity-fsr4-wrapper.git#v0.2.0`. To try the work in progress, append the branch instead: `...unity-fsr4-wrapper.git#beta`. The `beta` branch can contain features that have not been tested on hardware yet (see the [changelog](CHANGELOG.md)).
 
 Alternatively, add the dependency directly to `Packages/manifest.json`:
 
@@ -214,7 +214,7 @@ The module interpolates one frame between each pair of rendered frames and prese
 - The FSR upscaler active on the camera. Frame generation takes its depth, motion vectors and camera data from the upscale pass.
 - **VSync off** on Direct3D 12.
 - A base frame rate of roughly 30 fps or more.
-- One camera drives generation per frame. See [Known limitations](#known-limitations).
+- One camera drives generation per frame. In split-screen it pauses; see [Split-screen and multiple cameras](#split-screen-and-multiple-cameras).
 
 ### Enabling
 
@@ -242,7 +242,33 @@ A minimal on-screen toggle is available under **Package Manager > AchiraStudio F
 | `Stalled` | The present hook did not keep up or faulted, and generation switched itself off. Disable and re-enable to retry. |
 | `PluginUnavailable` | `FSR4FrameGen.dll` could not be loaded or does not match this package version. |
 
+### HUD-less input (experimental)
+
+Frame generation interpolates the whole backbuffer, so animated screen-space UI (a health bar, a minimap, floating text) is interpolated along with the scene and can ghost. FidelityFX can avoid that when it also gets an image of the frame without the UI and compares the two. The **FSR4 HUD-less Capture** renderer feature provides that image.
+
+1. Select your URP renderer asset and click **Add Renderer Feature > FSR4 HUD-less Capture**.
+2. Set `FSR4FrameGeneration.hudless = true`, tick it on the Frame Generation Controller, tick it in the debug HUD, or launch with `-fsr4-hudless`.
+3. Check `FSR4FrameGeneration.hudlessStatus`. It reads `Active` once frames are being handed over, and otherwise says what is missing.
+
+It needs Direct3D 12, SDR output, URP's overlay UI (Screen Space - Overlay canvases or UI Toolkit drawn by URP), and an `FSR4FrameGen.dll` built from these sources. Turn off FXAA and dithering on the camera: URP applies them after the capture, so they would be read as UI. The feature copies the image once per frame at display resolution. It is untested on hardware, so compare with it off before relying on it.
+
 For how the module works, latency, the diagnostic log and the Direct3D 12 diagnostic modes, read the [Frame generation guide](Documentation~/Frame-generation.md).
+
+## Split-screen and multiple cameras
+
+**Upscaling works per view.** URP creates one upscaler context for every camera, keyed by the camera, and sizes it to that camera's viewport. In a split-screen each player's view therefore has its own FSR context and temporal history, at its own render and display resolution, and nothing is shared between views. There is nothing to configure: give each player a base camera with its own viewport rect. URP composes the viewports into the backbuffer itself, so no extra compositor is needed. Contexts are created when a camera first renders, re-created when its viewport size changes (a player joins or leaves), and released by URP a few frames after the camera stops rendering.
+
+Keep in mind that upscaling cost scales with the number of views and with the pixels in each, and that each view needs its own context memory. The debug HUD and the diagnostics report list every active view with its render and display resolution.
+
+**Frame generation pauses in split-screen.** It interpolates the whole backbuffer from one camera's depth and motion vectors, which is only correct when that camera fills the screen. While two or more base cameras that render to the screen each cover at least 20% of it, frame generation pauses: frames are presented as usual, nothing is interpolated, and the HUD says why. It resumes, with a history reset, as soon as one view is left. Overlay cameras (camera stacking), render-to-texture cameras and small picture-in-picture windows do not count as views.
+
+| Setting | Effect |
+|---|---|
+| `FSR4FrameGeneration.pauseInSplitScreen` (default `true`) | Set to `false` to let the first upscaled camera drive generation anyway. The other views will interpolate wrongly. |
+| `FSR4FrameGeneration.sourceCamera` | Naming a camera turns the pause off, because you chose the camera that drives it. |
+| `isSplitScreenDetected`, `screenViewCount`, `pausedForSplitScreen`, `splitScreenPausedFrames` | Read-only state for your UI and for tests. |
+
+Interpolating a split-screen correctly needs depth and motion vectors for the whole screen, composed from every view with per-view scaling. That is not implemented and would need hardware validation, so it is listed in the roadmap.
 
 ## Performance monitor
 
@@ -251,7 +277,7 @@ The debug HUD is an in-game window that shows what the package is doing. It work
 | Block | Shows |
 |---|---|
 | **Upscaler** | Status or the reason it is not running, backend, provider in use, render and display resolution, quality preset, GPU memory, dispatch counters. |
-| **Performance** | Rendered frame rate, average and worst frame time, CPU and GPU frame time, and a frame-time graph of the last 180 frames. |
+| **Performance** | Rendered frame rate, average and worst frame time, 1% and 0.1% lows over the last 30 seconds, CPU and GPU frame time, and a frame-time graph of the last 180 frames. |
 | **Frame generation** | On/off and pacing toggles, state, provider, and rendered + generated = presented frame rates, with the raw frame counters. |
 
 To show it, add the **AchiraStudio > FSR4 Debug HUD** component to a GameObject, or launch the Player with `-fsr4-hud`. **F10** hides and shows the window; the key, the graph and the window scale are set on the component.
@@ -259,6 +285,16 @@ To show it, add the **AchiraStudio > FSR4 Debug HUD** component to a GameObject,
 CPU and GPU frame times come from Unity's `FrameTimingManager`. In release builds they need **Frame Timing Stats** enabled in Player Settings.
 
 Other modules can add their own block by implementing `IFSR4HudSection` and registering it with `FSR4HudSections.Register`.
+
+### Diagnostics report and benchmark
+
+The window's **Tools** row has three buttons:
+
+- **Copy report** puts a plain-text report on the clipboard: Unity version, OS, CPU, GPU, graphics API, VRAM, display and VSync settings, upscaler status, provider in use, and the frame-generation counters. Paste it into a bug report. It contains no user name, machine name or device id. The same text is available from code with `FSR4DiagnosticsReport.Build()`, and other modules add a block with `FSR4ReportSources.Register`.
+- **Save report** writes the same text to `fsr4-report-<time>.txt` in `Application.persistentDataPath`.
+- **Run benchmark** records frame times for 30 seconds after a 5 second warm-up and writes `fsr4-benchmark-<time>.csv` (one row per frame) and `.json` (average, median, worst, 1% and 0.1% lows, and the report from the start and the end of the run) to `Application.persistentDataPath`.
+
+From code, call `FSR4Benchmark.Start(warmupSeconds, durationSeconds)` and listen to `FSR4Benchmark.Completed`. From the command line, `-fsr4-benchmark -fsr4-benchmark-warmup 5 -fsr4-benchmark-seconds 30 -fsr4-benchmark-quit` runs one benchmark and exits. The times are the frame times of the rendered frames, so with frame generation on the displayed rate is higher than the benchmark shows; the report's frame-generation counters let you relate the two.
 
 ## Scripting API
 
@@ -417,29 +453,31 @@ FidelityFX normally replaces the engine's swapchain, which Unity's plugin API do
 
 - Player builds only.
 - One generated frame per rendered frame (2x).
-- One camera drives generation per frame, because the whole backbuffer is interpolated from one camera's depth and motion vectors. Other upscaled cameras in the same frame are ignored; `FSR4FrameGeneration.sourceCamera` selects the camera. Split-screen is not supported.
+- One camera drives generation per frame, because the whole backbuffer is interpolated from one camera's depth and motion vectors. Other upscaled cameras in the same frame are ignored; `FSR4FrameGeneration.sourceCamera` selects the camera. In split-screen, frame generation pauses (see [Split-screen and multiple cameras](#split-screen-and-multiple-cameras)); upscaling keeps working per view.
 - On Direct3D 12 each rendered frame costs several extra full-screen copies and presents, which keep Unity's backbuffer index in step.
 - Direct3D 12 requires VSync off.
 - Adds about one frame of latency, because the real frame is held back for the interpolated one.
-- The UI is part of the backbuffer, so animated UI can ghost. There is no HUD-less input yet.
+- The UI is part of the backbuffer, so animated UI can ghost. The experimental [HUD-less input](#hud-less-input-experimental) reduces this on Direct3D 12 with SDR output; it is not implemented for Vulkan or HDR output, and it only covers UI that URP draws after its final blit (Screen Space - Overlay canvases, UI Toolkit). UI rendered into the scene (Screen Space - Camera, World Space) cannot be separated.
 - Supported backbuffer formats: R8G8B8A8, B8G8R8A8, R10G10B10A2 and R16G16B16A16_FLOAT.
 
 ## Roadmap
 
-Planned work, in rough priority order. None of it is implemented yet.
+Planned work, in rough priority order.
 
-1. Hardware validation across Direct3D 12 and Vulkan, with a published compatibility matrix.
+1. Hardware validation across Direct3D 12 and Vulkan, with a published compatibility matrix. This includes the experimental HUD-less input, which is implemented for Direct3D 12 but has not run on hardware.
 2. A cheaper Direct3D 12 present path for frame generation, and a way to confirm that generated frames reach the display.
-3. Reactive mask, transparency mask and exposure texture inputs.
-4. A HUD-less input for frame generation, to stop UI ghosting.
-5. A benchmark mode and a one-click diagnostic report for bug submissions.
+3. HUD-less input for Vulkan and HDR output.
+4. Frame generation for split-screen, from depth and motion vectors composed across all views (it pauses today).
+5. Reactive mask, transparency mask and exposure texture inputs. Not started: FSR 4 ignores these masks, so only the FSR 3.1 fallback would benefit.
+
+Done in the `beta` branch: the diagnostics report, the benchmark runner and the HUD-less input (see the [changelog](CHANGELOG.md)).
 
 ## Building the native plugins
 
 The repository ships prebuilt `FSR4UnityPlugin.dll` and `FSR4FrameGen.dll`. You only need to rebuild them if you change the C++ sources or the startup check reports them as out of date.
 
 > [!NOTE]
-> The C++ sources are currently ahead of the prebuilt DLLs. The DLLs still load and work with this version of the package, but the fixes listed under *Unreleased* in the [changelog](CHANGELOG.md) and `FSR4FrameGeneration.providerInUse` need a rebuild.
+> The C++ sources are currently ahead of the prebuilt DLLs. The DLLs still load and work with this version of the package, but the fixes listed under *Unreleased* in the [changelog](CHANGELOG.md), `FSR4FrameGeneration.providerInUse` and the HUD-less input need a rebuild.
 
 Requirements are CMake, the MSVC C++ toolchain, your Unity Editor installation and the FidelityFX SDK 2.4.0. With `UNITY_EDITOR_DIR` and `FFX_SDK_DIR` set, close Unity and run `Native~\build.bat`. Full instructions are in [Building the native plugins](Documentation~/Building-the-native-plugins.md).
 

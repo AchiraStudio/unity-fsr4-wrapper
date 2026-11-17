@@ -34,6 +34,7 @@ namespace AchiraStudio.FSR4.DebugHud
 
         const int kWindowId = 0x46535234;   // "FSR4"
         const int kSamples = 180;
+        const int kLongSamples = 1800;   // about 30 s at 60 fps, the window for the 1% / 0.1% lows
         const float kMeasureInterval = 0.5f;
 
         static int s_Instances;
@@ -42,6 +43,12 @@ namespace AchiraStudio.FSR4.DebugHud
         // Frame-time history (milliseconds), newest at m_Head - 1.
         readonly float[] m_FrameMs = new float[kSamples];
         int m_Head, m_Count;
+        readonly float[] m_LongMs = new float[kLongSamples];
+        readonly float[] m_Scratch = new float[kLongSamples];
+        int m_LongHead, m_LongCount;
+        FSR4FrameSummary m_Summary;
+        string m_ToolStatus = "";
+        readonly List<FSR4ViewStats> m_Views = new List<FSR4ViewStats>();
 
         int m_FpsFrames;
         float m_FpsTime;
@@ -82,6 +89,10 @@ namespace AchiraStudio.FSR4.DebugHud
             m_Head = (m_Head + 1) % kSamples;
             if (m_Count < kSamples)
                 m_Count++;
+            m_LongMs[m_LongHead] = dt * 1000f;
+            m_LongHead = (m_LongHead + 1) % kLongSamples;
+            if (m_LongCount < kLongSamples)
+                m_LongCount++;
 
             m_FpsFrames++;
             m_FpsTime += dt;
@@ -99,6 +110,8 @@ namespace AchiraStudio.FSR4.DebugHud
                 }
                 m_AverageMs = m_Count > 0 ? sum / m_Count : 0f;
                 m_WorstMs = worst;
+                // The ring is not in time order, which does not matter for percentiles.
+                m_Summary = FSR4FrameStatistics.Summarize(m_LongMs, m_LongCount, m_Scratch);
             }
 
             // Unity's own frame timings. They stay at zero when the platform or the build does not provide them.
@@ -155,11 +168,54 @@ namespace AchiraStudio.FSR4.DebugHud
                 m_Sections[i].DrawGUI();
             }
 
+            GUILayout.Label("Tools", m_Header);
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Copy report"))
+            {
+                GUIUtility.systemCopyBuffer = FSR4DiagnosticsReport.Build();
+                m_ToolStatus = "Report copied to the clipboard.";
+            }
+            if (GUILayout.Button("Save report"))
+                m_ToolStatus = SaveReport();
+            if (GUILayout.Button(FSR4Benchmark.isRunning ? "Cancel benchmark" : "Run benchmark"))
+            {
+                if (FSR4Benchmark.isRunning) FSR4Benchmark.Cancel(); else FSR4Benchmark.Start();
+            }
+            GUILayout.EndHorizontal();
+            string toolText = FSR4Benchmark.isRunning ? $"Benchmark: {FSR4Benchmark.status} ({FSR4Benchmark.progress * 100f:0}%)" :
+                              !string.IsNullOrEmpty(FSR4Benchmark.status) ? "Benchmark: " + FSR4Benchmark.status : m_ToolStatus;
+            if (!string.IsNullOrEmpty(toolText))
+                GUILayout.Label(toolText, m_Small);
+
             GUI.DragWindow();
         }
 
+        static string SaveReport()
+        {
+            try
+            {
+                string path = System.IO.Path.Combine(Application.persistentDataPath, "fsr4-report-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + ".txt");
+                System.IO.File.WriteAllText(path, FSR4DiagnosticsReport.Build());
+                return "Report saved to " + path;
+            }
+            catch (Exception e)
+            {
+                return "Could not save the report: " + e.Message;
+            }
+        }
+
+        // The text is rebuilt a few times per second, not on every IMGUI event: building strings every frame puts garbage on the
+        // very heap this window is meant to help you watch. The layout and repaint events of one frame share the cached text.
+        const float kRefreshInterval = 0.25f;
+        float m_NextRefresh;
+
         void Refresh()
         {
+            float now = Time.unscaledTime;
+            if (now < m_NextRefresh)
+                return;
+            m_NextRefresh = now + kRefreshInterval;
+
             m_Sections.Clear();
             IReadOnlyList<IFSR4HudSection> all = FSR4HudSections.All;
             for (int i = 0; i < all.Count; i++)
@@ -190,6 +246,16 @@ namespace AchiraStudio.FSR4.DebugHud
                     sb.Append($"   Quality: {FSR4Stats.quality}");
                 sb.Append('\n');
             }
+            if (FSR4Stats.GetActiveViews(m_Views) > 1)
+            {
+                // Split-screen (or several upscaled cameras): every view has its own context and history.
+                sb.Append($"Views: {m_Views.Count}\n");
+                for (int i = 0; i < m_Views.Count; i++)
+                {
+                    FSR4ViewStats v = m_Views[i];
+                    sb.Append($"  {v.cameraName}: {v.renderResolution.x} x {v.renderResolution.y} -> {v.displayResolution.x} x {v.displayResolution.y} (context {v.contextId})\n");
+                }
+            }
             if (FSR4Diagnostics.TryGetContextMemory(out ulong total, out _))
                 sb.Append($"GPU memory: {total / (1024.0 * 1024.0):0.0} MB\n");
             if (FSR4Diagnostics.TryGetDispatchCounts(out ulong attempts, out ulong executed))
@@ -199,6 +265,8 @@ namespace AchiraStudio.FSR4.DebugHud
             sb.Clear();
             sb.Append($"Rendered: {m_Fps:0.0} fps\n");
             sb.Append($"Frame time: {m_AverageMs:0.00} ms average, {m_WorstMs:0.00} ms worst (last {m_Count} frames)\n");
+            if (m_Summary.frames >= 100)
+                sb.Append($"Lows: 1% {m_Summary.low1PercentFps:0.0} fps, 0.1% {m_Summary.low01PercentFps:0.0} fps (last {m_Summary.frames} frames)\n");
             if (m_CpuMs > 0.0 || m_GpuMs > 0.0)
                 sb.Append($"CPU {m_CpuMs:0.00} ms   GPU {m_GpuMs:0.00} ms");
             else

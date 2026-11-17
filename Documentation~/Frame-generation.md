@@ -20,11 +20,33 @@ The Editor has no swapchain for D3D12 (`GetSwapChain()` returns null) and loads 
 ## Requirements and caveats
 - FG 4.x needs a Radeon RX 9000 series GPU; other GPUs get the FG 3.1 provider. FG expects roughly 30+ real fps.
 - Adds about one frame of latency (the real frame is held back for the interpolated one).
-- The UI is part of the backbuffer, so animated UI can ghost. No HUD-less pass yet.
+- The UI is part of the backbuffer, so animated UI can ghost. The optional HUD-less input (below) reduces that on D3D12.
+- Split-screen: frame generation pauses while two or more base cameras that render to the screen each cover at least 20% of it (`pauseInSplitScreen`, default on). The check runs in `RenderPipelineManager.beginContextRendering`, before any camera renders, so the first camera of a split-screen frame is already skipped; no prepare is recorded, the present hook sees nothing new and passes the frame through. When one view is left, the next prepare carries a history reset. Overlay cameras, render-to-texture cameras and views smaller than 20% of the screen are not counted. Setting `sourceCamera` or `pauseInSplitScreen = false` bypasses the pause.
 - One camera drives frame generation per frame, because the swapchain is presented once per frame and the whole backbuffer is interpolated from one camera's depth and motion vectors. By default that is the first camera upscaled in the frame; further upscaled cameras in the same frame are ignored (a warning is logged once). Set `FSR4FrameGeneration.sourceCamera` to choose the camera. Split-screen is not supported.
 - Vulkan: the plugin must be preloaded in the Player (the `.meta` does this) so the swapchain is created through the hook; the hook adds one spare swapchain image and `TRANSFER_SRC/DST` usage.
 - D3D12 backbuffer formats supported: R8G8B8A8, B8G8R8A8, R10G10B10A2, R16G16B16A16_FLOAT.
 - If the present hook does not keep up for 5 consecutive frames the plugin switches itself off (state *Stalled*).
+
+## HUD-less input (experimental, D3D12, SDR)
+FidelityFX can separate UI from the scene when it is given the frame without the UI next to the backbuffer. The `FSR4HudlessFeature` URP renderer feature (*Add Renderer Feature > FSR4 HUD-less Capture*) provides it:
+
+1. A render-graph pass at `RenderPassEvent.AfterRenderingPostProcessing` copies the camera colour into a persistent texture. That is after URP's post processing and before URP's final blit, and URP draws its screen-space overlay UI only after the final blit (`UniversalRendererRenderGraph`), so the copy has no overlay UI.
+2. An unsafe pass then issues the plugin event `kEventHudless` (3) with the texture. The event handler (render thread) checks the texture matches the backbuffer size, re-configures the frame-generation context for the frame that was just prepared with `HUDLessColor` set, and executes an empty command list whose only purpose is to tell Unity which state the texture must be in (`SRV`) when the generate dispatch reads it at present time.
+3. If the texture format differs from the backbuffer format, the context is re-created once with `ffxCreateContextDescFrameGenerationHudless`, so the first frame with a new format goes without. If the provider refuses that description, HUD-less input switches itself off and frame generation carries on.
+
+Enable it with `FSR4FrameGeneration.hudless = true`, the controller component, the debug HUD toggle or `-fsr4-hudless`. `FSR4FrameGeneration.hudlessStatus` says whether it works and what is missing; `hudlessFrames` counts the frames that got a HUD-less image.
+
+Limits to know about:
+- The copy has to equal the backbuffer pixel for pixel apart from the UI. URP's final post-processing step (FXAA, dithering, film grain) runs after the capture, so disable FXAA and dithering on the camera; anything that differs is read as UI. The feature warns once when FXAA or dithering is on.
+- Only UI that is drawn after the final blit can be separated: Screen Space - Overlay canvases and UI Toolkit drawn by URP. UI inside the scene (Screen Space - Camera, World Space) is part of the scene colour.
+- Not implemented for Vulkan or HDR output (in HDR, URP renders the UI into its own texture and composites it).
+- With several cameras, the capture is taken from the camera that was prepared for frame generation (see `sourceCamera`) and camera stacking is not supported.
+- It needs an `FSR4FrameGen.dll` built from these sources. An older DLL does not export `FG_GetHudlessFrames` and ignores the event; `hudlessStatus` then asks for a rebuild.
+- The hand-over adds a command-buffer flush per frame (the event is configured like the prepare event).
+- Not run on hardware yet.
+
+## Diagnostics report and benchmark
+`FSR4DiagnosticsReport.Build()` returns a plain-text report (system, upscaler, frame generation) for bug reports; the debug HUD has **Copy report**, **Save report** and **Run benchmark** buttons. See the README's *Performance monitor* section for the benchmark output.
 
 ## Status API
 `FSR4FrameGeneration.state`, `.statusMessage`, `.GetStats()` (prepared / generated / passed-through frames, smoothed base frame time, GPU memory, last FFX error code).

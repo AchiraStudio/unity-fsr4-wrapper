@@ -106,7 +106,19 @@ static_assert(sizeof(FGPrepareParams) == 136, "FGPrepareParams layout must match
 static_assert(sizeof(FGConfig) == 32, "FGConfig layout must match C#");
 static_assert(sizeof(FGStats) == 56, "FGStats layout must match C#");
 
-enum FGEvent : int { kEventPrepare = 1, kEventDestroy = 2 };
+// Optional HUD-less colour for the frame being prepared (kEventHudless, D3D12 only). A separate event with its own struct, so
+// FGPrepareParams / FGConfig / FGStats keep their sizes and an older FSR4FrameGen.dll simply ignores the event.
+#pragma pack(push, 8)
+struct FGHudlessParams
+{
+    void*    texture;     // ID3D12Resource* of a texture holding the final image without the screen-space UI
+    uint32_t width, height;
+    uint32_t reserved0, reserved1;
+};
+#pragma pack(pop)
+static_assert(sizeof(FGHudlessParams) == 24, "FGHudlessParams layout must match C#");
+
+enum FGEvent : int { kEventPrepare = 1, kEventDestroy = 2, kEventHudless = 3 };
 
 enum FGState : int
 {
@@ -154,6 +166,10 @@ static bool g_loadAttempted = false, g_loadOk = false;
 static ffxContext g_fg = nullptr;
 static uint32_t   g_fgCreateFlags = 0, g_fgW = 0, g_fgH = 0, g_fgMaxW = 0, g_fgMaxH = 0, g_fgFormat = 0;
 static bool       g_fgFailed = false;
+static uint32_t   g_fgHudlessFormat = 0;               // hudless format the current context was created with (0 = none); g_fgMutex
+static std::atomic<uint32_t> g_wantHudlessFormat{ 0 }; // hudless format the next context should be created with (0 = none)
+static std::atomic<bool>     g_hudlessBroken{ false }; // creating a context with the hudless desc failed once: stay off
+static std::atomic<uint64_t> g_hudlessFrames{ 0 };     // frames that were configured with a HUD-less image
 static std::atomic<bool>     g_fgReady{ false };       // g_fg exists. The present hooks read this instead of g_fg, which is guarded by g_fgMutex
 static std::atomic<uint64_t> g_ownVram{ 0 };           // bytes of the plugin's own two textures (current-frame copy + interpolated frame)
 static std::string           g_fgProvider;             // provider version name of the FG context (guarded by g_stateMutex)
@@ -301,11 +317,13 @@ static void DestroyFgContext()
 static bool EnsureFgContext(const FGPrepareParams& p, uint32_t ffxFormat, uint32_t dispW, uint32_t dispH)
 {
     const bool same = g_fg && g_fgCreateFlags == p.createFlags && g_fgW == dispW && g_fgH == dispH &&
-                      g_fgMaxW == p.maxRenderW && g_fgMaxH == p.maxRenderH && g_fgFormat == ffxFormat;
+                      g_fgMaxW == p.maxRenderW && g_fgMaxH == p.maxRenderH && g_fgFormat == ffxFormat &&
+                      g_fgHudlessFormat == (IsD3D12() ? g_wantHudlessFormat.load() : 0u);
     if (same)
         return true;
     if (g_fgFailed && g_fgCreateFlags == p.createFlags && g_fgW == dispW && g_fgH == dispH && g_fgFormat == ffxFormat)
         return false;
+    const uint32_t hudlessFormat = IsD3D12() ? g_wantHudlessFormat.load() : 0u;
 
     DestroyFgContext();
     g_fgCreateFlags = p.createFlags; g_fgW = dispW; g_fgH = dispH; g_fgMaxW = p.maxRenderW; g_fgMaxH = p.maxRenderH; g_fgFormat = ffxFormat;
@@ -331,10 +349,27 @@ static bool EnsureFgContext(const FGPrepareParams& p, uint32_t ffxFormat, uint32
     ver.header.type = FFX_API_CREATE_CONTEXT_DESC_TYPE_FRAMEGENERATION_VERSION;
     ver.version     = FFX_FRAMEGENERATION_VERSION;
 
+    // Only needed when the HUD-less image uses another format than the backbuffer (it is optional in the SDK).
+    ffxCreateContextDescFrameGenerationHudless hudlessDesc{};
+    hudlessDesc.header.type = FFX_API_CREATE_CONTEXT_DESC_TYPE_FRAMEGENERATION_HUDLESS;
+    hudlessDesc.hudlessBackBufferFormat = hudlessFormat;
+
     create.header.pNext = &backendHeader;
     backendHeader.pNext = &ver.header;
+    if (hudlessFormat != 0)
+        ver.header.pNext = &hudlessDesc.header;
 
     const ffxReturnCode_t rc = g_ffxCreate(&g_fg, &create.header, nullptr);
+    if ((rc != FFX_API_RETURN_OK || !g_fg) && hudlessFormat != 0)
+    {
+        // The provider refused the optional hudless description: carry on without HUD-less input rather than without frame generation.
+        g_fg = nullptr;
+        g_hudlessBroken = true;
+        g_wantHudlessFormat = 0;
+        FgLog("frame-generation context with a HUD-less format failed (code %d): retrying without HUD-less input", (int)rc);
+        return EnsureFgContext(p, ffxFormat, dispW, dispH);
+    }
+    g_fgHudlessFormat = hudlessFormat;
     if (rc != FFX_API_RETURN_OK || !g_fg)
     {
         g_fg = nullptr;
@@ -369,7 +404,7 @@ static bool EnsureFgContext(const FGPrepareParams& p, uint32_t ffxFormat, uint32
 }
 
 // Configure every frame (cheap; mirrors the SDK sample's manual mode).
-static void ConfigureFg(void* nativeSwapchain, uint64_t frameId, uint32_t w, uint32_t h, const FGConfig& cfg)
+static void ConfigureFg(void* nativeSwapchain, uint64_t frameId, uint32_t w, uint32_t h, const FGConfig& cfg, void* hudlessD3D12 = nullptr)
 {
     ffxConfigureDescFrameGeneration c{};
     c.header.type = FFX_API_CONFIGURE_DESC_TYPE_FRAMEGENERATION;
@@ -379,6 +414,8 @@ static void ConfigureFg(void* nativeSwapchain, uint64_t frameId, uint32_t w, uin
     c.frameGenerationEnabled = true;
     c.allowAsyncWorkloads = false;
     c.HUDLessColor = {};
+    if (hudlessD3D12)
+        c.HUDLessColor = ffxApiGetResourceDX12(static_cast<ID3D12Resource*>(hudlessD3D12), FFX_API_RESOURCE_STATE_PIXEL_COMPUTE_READ);
     c.flags = cfg.debugFlags | FFX_FRAMEGENERATION_FLAG_NO_SWAPCHAIN_CONTEXT_NOTIFY;
     c.onlyPresentGenerated = false;
     c.generationRect = { 0, 0, (int32_t)w, (int32_t)h };
@@ -1047,7 +1084,9 @@ static bool DxInstallHook(IDXGISwapChain* sc)
         g_dx.origPresent1 = reinterpret_cast<decltype(g_dx.origPresent1)>(vtbl[22]);
         vtbl[8]  = reinterpret_cast<void*>(&DxHookPresent);
         vtbl[22] = reinterpret_cast<void*>(&DxHookPresent1);
-        if (has3 && vtbl[36] != reinterpret_cast<void*>(&DxHookGetIndex))
+        // GetCurrentBackBufferIndex is hooked for diagnostics only (it logs who asks for the index). Unity calls it every frame, so
+        // it is left alone unless an FSR4FrameGen.mode file selects a diagnostic mode.
+        if (has3 && DxDiagMode() != 0 && vtbl[36] != reinterpret_cast<void*>(&DxHookGetIndex))
         {
             g_dx.origGetIndex = reinterpret_cast<decltype(g_dx.origGetIndex)>(vtbl[36]);
             vtbl[36] = reinterpret_cast<void*>(&DxHookGetIndex);
@@ -1097,6 +1136,76 @@ static void WaitForHook(uint64_t frame)
     }
     else
         g_stallStrikes = 0;
+}
+
+// Hudless formats Unity may give a render texture (typeless / sRGB views of the same bytes) -> the SDK's UNORM format.
+static uint32_t FfxHudlessFormat(DXGI_FORMAT f)
+{
+    switch (f)
+    {
+    case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+    case DXGI_FORMAT_R8G8B8A8_UNORM:     return FFX_API_SURFACE_FORMAT_R8G8B8A8_UNORM;
+    case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8A8_UNORM:     return FFX_API_SURFACE_FORMAT_B8G8R8A8_UNORM;
+    case DXGI_FORMAT_R10G10B10A2_TYPELESS:
+    case DXGI_FORMAT_R10G10B10A2_UNORM:  return FFX_API_SURFACE_FORMAT_R10G10B10A2_UNORM;
+    case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+    case DXGI_FORMAT_R16G16B16A16_FLOAT: return FFX_API_SURFACE_FORMAT_R16G16B16A16_FLOAT;
+    default: return FFX_API_SURFACE_FORMAT_UNKNOWN;
+    }
+}
+
+// kEventHudless (render thread, after the camera's post processing and before the screen-space UI): hands the HUD-less image
+// of the frame that was just prepared to the frame-generation context, so FidelityFX can separate the UI from the scene.
+static void DxHudless(const FGHudlessParams& hp)
+{
+    if (!IsD3D12() || !hp.texture || g_hudlessBroken.load())
+        return;
+    {
+        std::lock_guard<std::mutex> lock(g_stateMutex);
+        if (!g_cfg.enabled) return;
+    }
+    IDXGISwapChain* sc = g_d3d12->GetSwapChain();
+    uint32_t w = 0, h = 0; DXGI_FORMAT fmt = DXGI_FORMAT_UNKNOWN;
+    if (!sc || !DxFillSwapchainInfo(w, h, fmt, sc))
+        return;
+    ID3D12Resource* res = static_cast<ID3D12Resource*>(hp.texture);
+    const D3D12_RESOURCE_DESC rd = res->GetDesc();
+    if (rd.Width != w || rd.Height != h)
+    {
+        // The HUD-less image must be exactly the backbuffer (same size, same pixels apart from the UI); anything else would be read as UI.
+        static std::atomic<bool> warned{ false };
+        if (!warned.exchange(true))
+            SetMessage("HUD-less image is " + std::to_string((unsigned)rd.Width) + "x" + std::to_string(rd.Height) + " but the backbuffer is " +
+                       std::to_string(w) + "x" + std::to_string(h) + ": HUD-less input ignored");
+        return;
+    }
+    const uint32_t hudFfx = FfxHudlessFormat(rd.Format);
+    if (hudFfx == FFX_API_SURFACE_FORMAT_UNKNOWN)
+        return;
+    const uint32_t want = hudFfx != FfxFormatFromDxgi(fmt) ? hudFfx : 0u;
+
+    std::lock_guard<std::mutex> lock(g_fgMutex);
+    if (g_wantHudlessFormat.load() != want)
+        g_wantHudlessFormat = want;       // the context is re-created with it at the next prepare; this frame goes without
+    if (!g_fg || g_fgHudlessFormat != want)
+        return;
+    const uint64_t frame = g_preparedFrame.load();
+    if (frame == 0 || frame == g_handledFrame.load() || frame != g_frameId)
+        return;                           // no prepare is waiting for a present
+    FGConfig cfg; { std::lock_guard<std::mutex> lock2(g_stateMutex); cfg = g_cfg; }
+    ConfigureFg(sc, frame, w, h, cfg, res);
+
+    // An empty list: its only job is to make Unity leave the texture in the state the dispatch at present time expects.
+    ID3D12Device* dev = g_d3d12->GetDevice();
+    DxSlot* slot = DxAcquire(dev, g_dx.prepSlots, g_dx.prepSlotIndex, false);
+    if (!slot) return;
+    slot->list->Close();
+    UnityGraphicsD3D12ResourceState states[1] = { { res, kSrvAll, kSrvAll } };
+    slot->fenceValue = g_d3d12->ExecuteCommandList(slot->list.Get(), 1, states);
+    g_hudlessFrames++;
 }
 
 static void DxPrepare(const FGPrepareParams& p)
@@ -1644,6 +1753,12 @@ static void UNITY_INTERFACE_API OnRenderEvent(int eventId, void* data)
         if (g_state.load() == kFgActive) g_state = kFgIdle;
         return;
     }
+    if (eventId == kEventHudless)
+    {
+        if (data && IsD3D12() && g_fgReady.load())
+            DxHudless(*static_cast<const FGHudlessParams*>(data));
+        return;
+    }
     if (eventId != kEventPrepare || !data)
         return;
     const FGPrepareParams& p = *static_cast<const FGPrepareParams*>(data);
@@ -1683,6 +1798,7 @@ static void UNITY_INTERFACE_API OnGraphicsDeviceEvent(UnityGfxDeviceEventType ev
                 cfg.flags = kUnityD3D12EventConfigFlag_FlushCommandBuffers | kUnityD3D12EventConfigFlag_SyncWorkerThreads;
                 g_d3d12->ConfigureEvent(kEventPrepare, &cfg);
                 g_d3d12->ConfigureEvent(kEventDestroy, &cfg);
+                g_d3d12->ConfigureEvent(kEventHudless, &cfg);
             }
         }
         else if (g_renderer == kUnityGfxRendererVulkan)
@@ -1800,6 +1916,9 @@ FG_EXPORT int FG_GetProviderVersion(char* buf, int capacity)
     buf[n] = 0;
     return n;
 }
+
+// Number of frames that were handed a HUD-less image so far (D3D12). Also tells C# that this build understands kEventHudless.
+FG_EXPORT uint64_t FG_GetHudlessFrames() { return g_hudlessFrames.load(); }
 
 // 1 = D3D12, 2 = Vulkan, 0 = unsupported renderer.
 FG_EXPORT int FG_GetBackend() { return IsD3D12() ? 1 : IsVulkan() ? 2 : 0; }

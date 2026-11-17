@@ -252,7 +252,9 @@ struct CommandSlot
     UINT64                            fenceValue = 0;
     bool                              closed = true;
 };
-static constexpr int kSlotCount = 6;
+// One list per dispatch, so this must cover (views per frame) x (frames in flight). It was 6, which made a 4-view split-screen
+// reuse a list whose GPU work from the previous frame had not finished and stall the render thread on it.
+static constexpr int kSlotCount = 16;
 static CommandSlot g_slots[kSlotCount];
 static int         g_slotIndex = 0;
 static HANDLE      g_slotEvent = nullptr;

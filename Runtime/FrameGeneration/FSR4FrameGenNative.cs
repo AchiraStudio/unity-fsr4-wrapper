@@ -27,6 +27,15 @@ namespace AchiraStudio.FSR4.FrameGeneration
         public IntPtr depth, motionVectors;
     }
 
+    /// <summary>Must match FGHudlessParams (24 bytes). Payload of the optional HUD-less event (D3D12 only).</summary>
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    internal struct FGHudlessParams
+    {
+        public IntPtr texture;
+        public uint width, height;
+        public uint reserved0, reserved1;
+    }
+
     /// <summary>Must match FGConfig (32 bytes).</summary>
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
     internal struct FGConfig
@@ -58,12 +67,16 @@ namespace AchiraStudio.FSR4.FrameGeneration
 
         public const int EventPrepare = 1;
         public const int EventDestroy = 2;
+        public const int EventHudless = 3;
 
         // Parameter blocks are read by the render thread some time after the event is issued, so they live in a ring of
         // unmanaged slots (same approach as the core upscaler).
         const int RingSize = 16;
         static IntPtr s_Ring;
         static int s_RingIndex;
+        static IntPtr s_HudlessRing;
+        static int s_HudlessRingIndex;
+        static int s_HudlessSupported = -1;   // -1 unknown, 0 no, 1 yes
         static IntPtr s_RenderEventFunc;
 
         [DllImport(Dll)] static extern IntPtr FG_GetRenderEventFunc();
@@ -73,6 +86,7 @@ namespace AchiraStudio.FSR4.FrameGeneration
         [DllImport(Dll)] static extern int FG_GetBackend();
         [DllImport(Dll)] static extern void FG_GetStructSizes(int* prepare, int* config, int* stats);
         [DllImport(Dll)] static extern int FG_GetProviderVersion(byte* buffer, int capacity);
+        [DllImport(Dll)] static extern ulong FG_GetHudlessFrames();
 
         public static bool TryInitialize(out string error)
         {
@@ -138,6 +152,44 @@ namespace AchiraStudio.FSR4.FrameGeneration
             }
             catch (EntryPointNotFoundException) { return string.Empty; }   // older FSR4FrameGen.dll: rebuild it to get this
             catch (DllNotFoundException) { return string.Empty; }
+        }
+
+        /// <summary>
+        /// True when the loaded FSR4FrameGen.dll understands the HUD-less event (it was built from this version of the source).
+        /// An older DLL does not export the counter and ignores the event, so the feature stays off instead of failing.
+        /// </summary>
+        public static bool HudlessSupported
+        {
+            get
+            {
+                if (s_HudlessSupported < 0)
+                {
+                    try { FG_GetHudlessFrames(); s_HudlessSupported = 1; }
+                    catch (EntryPointNotFoundException) { s_HudlessSupported = 0; }
+                    catch (DllNotFoundException) { s_HudlessSupported = 0; }
+                }
+                return s_HudlessSupported == 1;
+            }
+        }
+
+        /// <summary>Frames that were handed a HUD-less image by the native plugin so far.</summary>
+        public static ulong HudlessFrames()
+        {
+            try { return HudlessSupported ? FG_GetHudlessFrames() : 0UL; }
+            catch (Exception) { return 0UL; }
+        }
+
+        /// <summary>Tells the native plugin which texture holds the HUD-less image of the frame that was just prepared.</summary>
+        public static void IssueHudless(CommandBuffer cmd, IntPtr texture, uint width, uint height)
+        {
+            if (s_RenderEventFunc == IntPtr.Zero || texture == IntPtr.Zero)
+                return;
+            if (s_HudlessRing == IntPtr.Zero)
+                s_HudlessRing = Marshal.AllocHGlobal(sizeof(FGHudlessParams) * RingSize);
+            IntPtr slot = s_HudlessRing + (s_HudlessRingIndex % RingSize) * sizeof(FGHudlessParams);
+            s_HudlessRingIndex++;
+            *(FGHudlessParams*)slot = new FGHudlessParams { texture = texture, width = width, height = height };
+            cmd.IssuePluginEventAndData(s_RenderEventFunc, EventHudless, slot);
         }
 
         public static string BackendName()

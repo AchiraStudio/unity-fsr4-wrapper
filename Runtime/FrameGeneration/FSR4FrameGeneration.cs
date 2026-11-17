@@ -1,7 +1,9 @@
 #if ENABLE_UPSCALER_FRAMEWORK
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace AchiraStudio.FSR4.FrameGeneration
 {
@@ -66,7 +68,15 @@ namespace AchiraStudio.FSR4.FrameGeneration
         static bool s_HavePushed;
         static Camera s_SourceCamera;
         static int s_LastPrepareFrame = -1;
+        static Camera s_PreparedCamera;
         static bool s_WarnedMultiCamera;
+        static bool s_Hudless;
+        static int s_HudlessFeatureFrame = -1;
+        static bool s_PauseInSplitScreen = true;
+        static int s_ScreenViews;
+        static bool s_ResumeReset;
+        static ulong s_SplitScreenPausedFrames;
+        static int s_LastPausedFrame = -1;
 
         /// <summary>Requested state. Frame generation only runs when this is true and <see cref="state"/> becomes Active.</summary>
         public static bool enabled
@@ -107,6 +117,65 @@ namespace AchiraStudio.FSR4.FrameGeneration
         {
             get => s_SourceCamera;
             set => s_SourceCamera = value;
+        }
+
+        /// <summary>
+        /// Frame generation interpolates the whole backbuffer from one camera's depth and motion vectors, which is wrong when two
+        /// or more cameras share the screen (split-screen). While this is true (the default) and more than one base camera renders
+        /// to the screen, frame generation pauses: frames are presented normally, nothing is interpolated, and it resumes with a
+        /// history reset as soon as only one view is left. Setting <see cref="sourceCamera"/> turns the pause off, because then you
+        /// have chosen which camera drives it. Set this to false to keep the old behaviour (the first upscaled camera drives it).
+        /// </summary>
+        public static bool pauseInSplitScreen
+        {
+            get => s_PauseInSplitScreen;
+            set => s_PauseInSplitScreen = value;
+        }
+
+        /// <summary>Number of base cameras that rendered to the screen (covering at least 20% of it) in the current frame's camera list.</summary>
+        public static int screenViewCount => s_ScreenViews;
+
+        /// <summary>True when two or more cameras share the screen, whether or not frame generation reacts to it.</summary>
+        public static bool isSplitScreenDetected => s_ScreenViews >= 2;
+
+        /// <summary>True while frame generation is requested but paused because of split-screen (see <see cref="pauseInSplitScreen"/>).</summary>
+        public static bool pausedForSplitScreen => s_Enabled && s_PauseInSplitScreen && s_SourceCamera == null && s_ScreenViews >= 2;
+
+        /// <summary>Frames in which a camera was skipped because of the split-screen pause.</summary>
+        public static ulong splitScreenPausedFrames => s_SplitScreenPausedFrames;
+
+        /// <summary>
+        /// Experimental, off by default. Gives frame generation an image of the frame without the screen-space UI, so animated UI is
+        /// extracted from the backbuffer instead of being interpolated with the scene (the "UI ghosting" of frame generation).
+        /// Needs the <see cref="FSR4HudlessFeature"/> renderer feature on the URP renderer, a FSR4FrameGen.dll built from this
+        /// version, Direct3D12, and SDR output. See <see cref="hudlessStatus"/> for what is missing.
+        /// </summary>
+        public static bool hudless
+        {
+            get => s_Hudless;
+            set => s_Hudless = value;
+        }
+
+        /// <summary>Frames that frame generation was given a HUD-less image for (0 until it works).</summary>
+        public static ulong hudlessFrames => s_Available ? FGNative.HudlessFrames() : 0UL;
+
+        /// <summary>One line explaining whether HUD-less input is running, and if not, why.</summary>
+        public static string hudlessStatus
+        {
+            get
+            {
+                if (!s_Hudless) return "Off";
+                if (!s_Enabled) return "Waiting for frame generation to be enabled";
+                Initialise();
+                if (!s_Available) return "Frame generation is unavailable";
+                if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Direct3D12) return "Only implemented for Direct3D12";
+                if (!FGNative.HudlessSupported) return "FSR4FrameGen.dll is too old: rebuild it with Native~/build.bat";
+                var hdr = HDROutputSettings.main;
+                if (hdr != null && hdr.available && hdr.active) return "Not supported with HDR output";
+                if (s_HudlessFeatureFrame < 0 || Time.frameCount - s_HudlessFeatureFrame > 2)
+                    return "Add the FSR4 HUD-less Capture renderer feature to the URP renderer";
+                return FGNative.HudlessFrames() > 0 ? "Active" : "Capturing, waiting for the first frame generation";
+            }
         }
 
         /// <summary>False when the native plugin is missing / unsupported (e.g. wrong graphics API). See <see cref="statusMessage"/>.</summary>
@@ -168,14 +237,23 @@ namespace AchiraStudio.FSR4.FrameGeneration
             // Domain reload can be disabled in the Editor: reset all static state so a new play session starts clean.
             s_Enabled = false; s_Initialised = false; s_Available = false; s_HavePushed = false; s_Message = "";
             s_SourceCamera = null; s_LastPrepareFrame = -1; s_WarnedMultiCamera = false;
+            s_PreparedCamera = null; s_Hudless = false; s_HudlessFeatureFrame = -1;
+            s_PauseInSplitScreen = true; s_ScreenViews = 0; s_ResumeReset = false; s_SplitScreenPausedFrames = 0;
 
             FSR4Hooks.UpscaleDispatched -= OnUpscaleDispatched;
             FSR4Hooks.UpscaleDispatched += OnUpscaleDispatched;
+            RenderPipelineManager.beginContextRendering -= OnBeginContextRendering;
+            RenderPipelineManager.beginContextRendering += OnBeginContextRendering;
             FSR4HudSections.Register(FSR4FrameGenHudSection.instance);   // shown by the optional debug HUD module, if present
+            FSR4ReportSources.Register(FSR4FrameGenReportSource.instance);   // added to diagnostics reports
 
             foreach (string arg in Environment.GetCommandLineArgs())
+            {
                 if (string.Equals(arg, "-fsr4-framegen", StringComparison.OrdinalIgnoreCase))
                     enabled = true;
+                else if (string.Equals(arg, "-fsr4-hudless", StringComparison.OrdinalIgnoreCase))
+                    s_Hudless = true;
+            }
         }
 
         static void PushConfig(bool force)
@@ -207,6 +285,54 @@ namespace AchiraStudio.FSR4.FrameGeneration
         }
 
         // ------------------------------------------------------------------------------------------------------
+        // Split-screen detection. beginContextRendering runs before any camera of the frame renders, so frame generation
+        // can be paused from the first camera on instead of noticing the second camera after the first one was prepared.
+        // ------------------------------------------------------------------------------------------------------
+        static void OnBeginContextRendering(ScriptableRenderContext context, List<Camera> cameras)
+        {
+            int views = 0;
+            for (int i = 0; i < cameras.Count; i++)
+            {
+                Camera c = cameras[i];
+                if (c == null || c.cameraType != CameraType.Game || c.targetTexture != null)
+                    continue;   // scene view, previews, render-to-texture cameras
+                if (c.TryGetComponent(out UniversalAdditionalCameraData data) && data.renderType == CameraRenderType.Overlay)
+                    continue;   // overlay cameras are drawn on top of their base camera, they are not another view
+                Rect r = c.rect;
+                if (r.width * r.height >= 0.2f)   // a small picture-in-picture window does not make a split-screen
+                    views++;
+            }
+            if (s_ScreenViews >= 2 && views < 2)
+                s_ResumeReset = true;   // frames were skipped: do not interpolate across the gap
+            s_ScreenViews = views;
+        }
+
+        // ------------------------------------------------------------------------------------------------------
+        // HUD-less capture (FSR4HudlessFeature). The feature records its passes whenever this is true; the gate below is
+        // evaluated while the graph executes, after the upscaler pass of the same camera has issued the prepare.
+        // ------------------------------------------------------------------------------------------------------
+        internal static bool hudlessRequested
+        {
+            get
+            {
+                if (!s_Hudless || !s_Enabled) return false;
+                if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Direct3D12) return false;
+                var hdr = HDROutputSettings.main;
+                return !(hdr != null && hdr.available && hdr.active);
+            }
+        }
+
+        internal static void NotifyHudlessFeatureRecorded() => s_HudlessFeatureFrame = Time.frameCount;
+
+        /// <summary>True when this camera is the one whose frame was prepared for frame generation in the current frame.</summary>
+        internal static bool IsHudlessSourceThisFrame(Camera camera)
+        {
+            if (!hudlessRequested || !s_Available || !FGNative.HudlessSupported)
+                return false;
+            return s_LastPrepareFrame == Time.frameCount && (s_PreparedCamera == null || s_PreparedCamera == camera);
+        }
+
+        // ------------------------------------------------------------------------------------------------------
         // Called from inside the upscale pass: record FFX frame-generation "prepare" (depth, motion vectors, camera).
         // ------------------------------------------------------------------------------------------------------
         static void OnUpscaleDispatched(CommandBuffer cmd, in FSR4FrameData f)
@@ -221,6 +347,15 @@ namespace AchiraStudio.FSR4.FrameGeneration
             // prepare in the same frame used to wait for a present that had not happened yet and stalled the module.
             if (s_SourceCamera != null && f.camera != s_SourceCamera)
                 return;
+            if (pausedForSplitScreen)
+            {
+                if (Time.frameCount != s_LastPausedFrame)
+                {
+                    s_LastPausedFrame = Time.frameCount;
+                    s_SplitScreenPausedFrames++;
+                }
+                return;
+            }
             int frameIndex = Time.frameCount;
             if (frameIndex == s_LastPrepareFrame)
             {
@@ -233,6 +368,7 @@ namespace AchiraStudio.FSR4.FrameGeneration
                 return;
             }
             s_LastPrepareFrame = frameIndex;
+            s_PreparedCamera = f.camera;
 
             PushConfig(false);   // picks up HDR output changes
 
@@ -249,7 +385,7 @@ namespace AchiraStudio.FSR4.FrameGeneration
                 maxRenderW = (uint)f.maxRenderResolution.x, maxRenderH = (uint)f.maxRenderResolution.y,
                 renderW = (uint)f.renderResolution.x, renderH = (uint)f.renderResolution.y,
                 displayW = (uint)f.displayResolution.x, displayH = (uint)f.displayResolution.y,
-                reset = f.resetHistory ? 1 : 0,
+                reset = (f.resetHistory || s_ResumeReset) ? 1 : 0,
                 jitterX = f.jitter.x, jitterY = f.jitter.y,
                 mvScaleX = f.motionVectorScale.x, mvScaleY = f.motionVectorScale.y,
                 frameTimeMs = f.frameTimeMs,
@@ -260,6 +396,7 @@ namespace AchiraStudio.FSR4.FrameGeneration
                 depth = f.depth, motionVectors = f.motionVectors,
             };
             FGNative.Prepare(cmd, in p);
+            s_ResumeReset = false;
         }
     }
 }
