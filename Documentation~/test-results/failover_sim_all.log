@@ -1,0 +1,4 @@
+[FSR4] Failure simulation is ON (mode 2: 1 = first provider fails its probe, 2 = every provider fails, 3 = first provider fails on the render thread).
+[FSR4] No FSR provider works on this machine: every FSR provider failed (). The upscaler is disabled; the frame is shown without FSR.
+[Showcase] FSR is unavailable on this machine (every FSR provider failed ()). Falling back to STP.
+[Showcase] Pipeline upscaler: Spatial-Temporal Post-Processing  wrapper active: False

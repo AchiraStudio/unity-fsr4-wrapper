@@ -1,0 +1,36 @@
+[15:25:07.792] Start: 6000.7.0b9  AMD Radeon RX 9060 XT (driver Direct3D 12 [level 12.2])  Direct3D12  1920x1080
+[15:25:07.796] Pipeline upscaler: AMD FSR 4 (Custom Wrapper)  wrapper active: True
+[15:25:07.796] === mode: smoke
+[15:25:12.037] smoke_fsr_auto_quality: Auto / Quality | req Auto -> in use '4.1.2' | 1280x720 -> 1920x1080 | 204.6 fps | FG Idle r211.4+g0.0
+[15:25:17.806] smoke_framegen: Frame generation requested | req Auto -> in use '4.1.2' | 1280x720 -> 1920x1080 | 95.8 fps | FG Active r95.5+g95.5
+[15:25:17.808] === mode: framegen
+[15:25:27.050] fg_off: Frame generation off | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 210.3 fps | FG Idle r211.2+g0.0
+[15:25:40.308] fg_on: Frame generation on | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 97.5 fps | FG Active r99.2+g99.2
+[15:25:43.577] external capture 'fg_on_desktop': done
+[15:25:53.818] fg_on_nopacing: Frame generation on, pacing off | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 98.6 fps | FG Active r99.6+g99.6
+[15:26:04.051] fg_on_hudless: Frame generation on + HUD-less | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 110.6 fps | FG Active r110.9+g110.9
+[15:26:11.283] fg_off_again: Frame generation off again | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 240.6 fps | FG Idle r235.3+g0.0
+[15:26:11.283] === mode: hud
+[15:26:18.509] hud_OverlayUIToolkit_fsr: OverlayUIToolkit / fsr | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 280.8 fps | FG Idle r278.9+g0.0
+[15:26:25.751] hud_OverlayUIToolkit_fsr_fg: OverlayUIToolkit / fsr_fg | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 121.1 fps | FG Active r121.6+g121.6
+[15:26:28.864] external capture 'hud_OverlayUIToolkit_fsr_fg_desktop': done
+[15:26:36.104] hud_OverlayUIToolkit_fsr_fg_hudless: OverlayUIToolkit / fsr_fg_hudless | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 119.7 fps | FG Active r119.2+g119.2
+[15:26:39.161] external capture 'hud_OverlayUIToolkit_fsr_fg_hudless_desktop': done
+[15:26:46.391] hud_ScreenSpaceCamera_fsr: ScreenSpaceCamera / fsr | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 278.2 fps | FG Idle r275.4+g0.0
+[15:26:53.624] hud_ScreenSpaceCamera_fsr_fg: ScreenSpaceCamera / fsr_fg | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 121.6 fps | FG Active r122.5+g122.5
+[15:26:56.617] external capture 'hud_ScreenSpaceCamera_fsr_fg_desktop': done
+[15:27:03.855] hud_ScreenSpaceCamera_fsr_fg_hudless: ScreenSpaceCamera / fsr_fg_hudless | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 119.8 fps | FG Active r119.8+g119.8
+[15:27:06.977] external capture 'hud_ScreenSpaceCamera_fsr_fg_hudless_desktop': done
+[15:27:14.201] hud_WorldSpace_fsr: WorldSpace / fsr | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 277.9 fps | FG Idle r271.7+g0.0
+[15:27:21.434] hud_WorldSpace_fsr_fg: WorldSpace / fsr_fg | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 121.9 fps | FG Active r122.6+g122.6
+[15:27:24.339] external capture 'hud_WorldSpace_fsr_fg_desktop': done
+[15:27:31.574] hud_WorldSpace_fsr_fg_hudless: WorldSpace / fsr_fg_hudless | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 119.2 fps | FG Active r119.8+g119.8
+[15:27:34.594] external capture 'hud_WorldSpace_fsr_fg_hudless_desktop': done
+[15:27:39.324] hud_ScreenSpaceCamera_native: ScreenSpaceCamera / native | req off -> in use '' | 1920x1080 -> 1920x1080 | 266.4 fps | FG Idle r267.2+g0.0
+[15:27:39.325] === mode: menu
+[15:27:43.748] menu_display: Menu / display | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 0.0 fps | FG Active r113.3+g113.3
+[15:27:45.161] menu_upscaling: Menu / upscaling | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 0.0 fps | FG Active r114.3+g114.3
+[15:27:46.580] menu_framegen: Menu / framegen | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 0.0 fps | FG Active r111.8+g111.8
+[15:27:48.011] menu_advanced: Menu / advanced | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 0.0 fps | FG Active r111.4+g111.4
+[15:27:49.421] menu_overlays: Menu / overlays | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 0.0 fps | FG Active r111.4+g111.4
+[15:27:49.423] All steps finished.

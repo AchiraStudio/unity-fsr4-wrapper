@@ -1,0 +1,19 @@
+Unity 6000.6.8f1  AMD Radeon RX 9060 XT  Direct3D12
+available upscalers: Automatic | Bilinear | Nearest-Neighbor | FidelityFX Super Resolution 1.0 | Spatial-Temporal Post-Processing | AMD FSR 4 (Custom Wrapper)
+active upscaler: AMD FSR 4 (Custom Wrapper)  notReady=''  failed=False
+Auto  q0: pass recorded 1280x720 -> 1280x720  provider='4.1.2'  skip=''
+Auto  q1: pass recorded 853x480 -> 1280x720  provider='4.1.2'  skip=''
+Auto  q2: pass recorded 752x423 -> 1280x720  provider='4.1.2'  skip=''
+Auto  q3: pass recorded 640x360 -> 1280x720  provider='4.1.2'  skip=''
+Auto  q4: pass recorded 426x240 -> 1280x720  provider='4.1.2'  skip=''
+FSR3  q0: pass recorded 1280x720 -> 1280x720  provider='3.1.6'  skip=''
+FSR3  q1: pass recorded 853x480 -> 1280x720  provider='3.1.6'  skip=''
+FSR3  q2: pass recorded 752x423 -> 1280x720  provider='3.1.6'  skip=''
+FSR3  q3: pass recorded 640x360 -> 1280x720  provider='3.1.6'  skip=''
+FSR3  q4: pass recorded 426x240 -> 1280x720  provider='3.1.6'  skip=''
+FSR2  q0: pass recorded 1280x720 -> 1280x720  provider='2.3.4'  skip=''
+FSR2  q1: pass recorded 853x480 -> 1280x720  provider='2.3.4'  skip=''
+FSR2  q2: pass recorded 752x423 -> 1280x720  provider='2.3.4'  skip=''
+FSR2  q3: pass recorded 640x360 -> 1280x720  provider='2.3.4'  skip=''
+FSR2  q4: pass recorded 426x240 -> 1280x720  provider='2.3.4'  skip=''
+DONE

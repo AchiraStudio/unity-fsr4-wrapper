@@ -1,6 +1,6 @@
 # Frame generation (experimental)
 
-AMD FidelityFX frame generation (interpolation). **Off by default. Player builds only. Never run on hardware by the author.**
+AMD FidelityFX frame generation (interpolation). **Off by default. Player builds only. Run on one GPU (Radeon RX 9060 XT, Direct3D 12); see the README's *Validation and test results* for the measurements.**
 
 ## Why it needs its own plugin and a Player build
 FidelityFX normally replaces the engine's swapchain. Unity's plugin API cannot do that, so `FSR4FrameGen.dll` uses the SDK's
@@ -43,7 +43,7 @@ Limits to know about:
 - With several cameras, the capture is taken from the camera that was prepared for frame generation (see `sourceCamera`) and camera stacking is not supported.
 - It needs an `FSR4FrameGen.dll` built from these sources. An older DLL does not export `FG_GetHudlessFrames` and ignores the event; `hudlessStatus` then asks for a rebuild.
 - The hand-over adds a command-buffer flush per frame (the event is configured like the prepare event).
-- Not run on hardware yet.
+- Run on a Radeon RX 9060 XT: it reports `Active` and gives a small reduction in artifacts around fast-moving HUD elements (3 to 4 %, within the capture-to-capture spread). Not run on other hardware.
 
 ## Diagnostics report and benchmark
 `FSR4DiagnosticsReport.Build()` returns a plain-text report (system, upscaler, frame generation) for bug reports; the debug HUD has **Copy report**, **Save report** and **Run benchmark** buttons. See the README's *Performance monitor* section for the benchmark output.

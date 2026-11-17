@@ -6,12 +6,12 @@
 
 [![Version](https://img.shields.io/badge/version-0.2.0-blue)](CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-6000.6%2B-black?logo=unity)](https://unity.com)
-[![URP](https://img.shields.io/badge/URP-17.6.0-blue)](https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@17.6/manual/index.html)
+[![URP](https://img.shields.io/badge/URP-17.6%20%7C%2017.7-blue)](https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@17.6/manual/index.html)
 [![FidelityFX SDK](https://img.shields.io/badge/FidelityFX%20SDK-2.4.0-ed1c24)](https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK)
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-lightgrey)](#compatibility)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE.md)
 
-[Installation](#installation) · [Quick start](#quick-start) · [Configuration](#configuration) · [Frame generation](#frame-generation) · [Scripting API](#scripting-api) · [Troubleshooting](#troubleshooting)
+[Installation](#installation) · [Quick start](#quick-start) · [Configuration](#configuration) · [Frame generation](#frame-generation) · [Test results](#validation-and-test-results) · [Scripting API](#scripting-api) · [Troubleshooting](#troubleshooting)
 
 </div>
 
@@ -23,18 +23,20 @@ This package registers FSR as a custom upscaler in Unity's **Upscaler Framework*
 
 The package is split into independent modules. The upscaler is the core; frame generation and the editor tooling are optional and can be deleted without breaking the rest.
 
-> [!WARNING]
-> **Pre-release. Not yet validated on hardware.**
-> The native plugins compile and link against the FidelityFX SDK 2.4.0 and Unity 6.6 headers, and the C# follows the pattern of Unity's own FSR 2 wrapper, but the author has not run the package on a GPU. Treat the first run on your machine as a bring-up session. Frame generation is the least-tested part: it is off by default and works in Player builds only.
+![FSR 4 in the Oasis sample scene, Direct3D 12 Player build](Documentation~/images/results/hero.jpg)
+
+> [!NOTE]
+> **Pre-release, validated on one GPU.** The package has been run in Direct3D 12 Player builds on a Radeon RX 9060 XT (RDNA 4) with **Unity 6000.6.8f1** and **6000.7.0b9**: all FSR generations and quality modes, split-screen, frame generation, and the failure fallback. The measurements are in [Validation and test results](#validation-and-test-results). Vulkan and other GPUs (NVIDIA, Intel, older Radeon) have not been run on hardware. Frame generation is experimental: it is off by default, works in Player builds only, and its gain depends on whether the scene is GPU-bound.
 > If something misbehaves, please [open an issue](../../issues) with the details listed under [Reporting issues](#reporting-issues).
 
 ### Project status
 
 | Component | Direct3D 12 | Vulkan | Notes |
 |---|---|---|---|
-| Upscaling (FSR 4 ML / FSR 3.1 / FSR 2.3) | Implemented | Implemented, experimental | Main path is Direct3D 12. |
-| Frame generation (2x interpolation) | Implemented, experimental | Implemented, experimental | Player builds only. Off by default. |
-| Hardware validation | Pending | Pending | Reports from real hardware are welcome. |
+| Upscaling (FSR 4 ML / FSR 3.1 / FSR 2.3) | Implemented, validated on one GPU | Implemented, experimental | Main path is Direct3D 12. |
+| Frame generation (2x interpolation) | Implemented, experimental, validated on one GPU | Implemented, experimental | Player builds only. Off by default. Net gain about 1.6x when GPU-bound, about none when CPU-bound. |
+| Failure fallback (pink-screen protection) | Implemented, tested with simulated failures | Same code path | See [Failure handling](#failure-handling). |
+| Hardware validation | Radeon RX 9060 XT only | Pending | Reports from other hardware are welcome. |
 
 ## Table of contents
 
@@ -45,6 +47,7 @@ The package is split into independent modules. The upscaler is the core; frame g
 - [Configuration](#configuration)
 - [Frame generation](#frame-generation)
 - [Performance monitor](#performance-monitor)
+- [Validation and test results](#validation-and-test-results)
 - [Scripting API](#scripting-api)
 - [Architecture](#architecture)
 - [Troubleshooting](#troubleshooting)
@@ -77,6 +80,7 @@ The package is split into independent modules. The upscaler is the core; frame g
 - In-game debug HUD: upscaler status, frame-time graph, CPU and GPU frame time, and separate rendered, generated and presented frame rates.
 - Runtime diagnostics API: active backend, provider in use, GPU memory, dispatch counters, frame-generation statistics.
 - Startup check that detects native plugins built against a different version of the package.
+- Automatic failover between FSR providers, so a provider the GPU cannot run never leaves a pink or black image (see [Failure handling](#failure-handling)).
 - One-click project setup from the **Tools > AchiraStudio > FSR4** menu.
 
 ## Compatibility
@@ -86,7 +90,7 @@ The package is split into independent modules. The upscaler is the core; frame g
 | | |
 |---|---|
 | **Unity** | 6000.6 or newer |
-| **Render pipeline** | Universal RP 17.6.0 (installed automatically as a dependency) |
+| **Render pipeline** | Universal RP 17.6 (Unity 6.6) or 17.7 (Unity 6.7). 17.6.0 is installed automatically as a dependency; both were tested. |
 | **Platform** | Windows x64, Editor and Standalone |
 | **Graphics API** | Direct3D 12 (recommended) or Vulkan (experimental) |
 | **Anti-aliasing** | MSAA must be off. FSR replaces it. |
@@ -250,7 +254,7 @@ Frame generation interpolates the whole backbuffer, so animated screen-space UI 
 2. Set `FSR4FrameGeneration.hudless = true`, tick it on the Frame Generation Controller, tick it in the debug HUD, or launch with `-fsr4-hudless`.
 3. Check `FSR4FrameGeneration.hudlessStatus`. It reads `Active` once frames are being handed over, and otherwise says what is missing.
 
-It needs Direct3D 12, SDR output, URP's overlay UI (Screen Space - Overlay canvases or UI Toolkit drawn by URP), and an `FSR4FrameGen.dll` built from these sources. Turn off FXAA and dithering on the camera: URP applies them after the capture, so they would be read as UI. The feature copies the image once per frame at display resolution. It is untested on hardware, so compare with it off before relying on it.
+It needs Direct3D 12, SDR output, URP's overlay UI (Screen Space - Overlay canvases or UI Toolkit drawn by URP), and an `FSR4FrameGen.dll` built from these sources (the prebuilt DLL is). Turn off FXAA and dithering on the camera: URP applies them after the capture, so they would be read as UI. The feature copies the image once per frame at display resolution. On a Radeon RX 9060 XT it runs (`hudlessStatus` reads `Active`) and gives a small reduction in artifacts around fast-moving HUD elements, 3 to 4 % by the metric in [HUD ghosting](#hud-ghosting), which is within the capture-to-capture spread. Compare with it off before relying on it.
 
 For how the module works, latency, the diagnostic log and the Direct3D 12 diagnostic modes, read the [Frame generation guide](Documentation~/Frame-generation.md).
 
@@ -295,6 +299,171 @@ The window's **Tools** row has three buttons:
 - **Run benchmark** records frame times for 30 seconds after a 5 second warm-up and writes `fsr4-benchmark-<time>.csv` (one row per frame) and `.json` (average, median, worst, 1% and 0.1% lows, and the report from the start and the end of the run) to `Application.persistentDataPath`.
 
 From code, call `FSR4Benchmark.Start(warmupSeconds, durationSeconds)` and listen to `FSR4Benchmark.Completed`. From the command line, `-fsr4-benchmark -fsr4-benchmark-warmup 5 -fsr4-benchmark-seconds 30 -fsr4-benchmark-quit` runs one benchmark and exits. The times are the frame times of the rendered frames, so with frame generation on the displayed rate is higher than the benchmark shows; the report's frame-generation counters let you relate the two.
+
+## Validation and test results
+
+Everything here was measured in Windows Player builds (Direct3D 12) of a Unity URP project, scripted with `-fsr-run` so that settings, camera and timing are identical between runs. Raw results are in [`Documentation~/test-results`](Documentation~/test-results).
+
+| | |
+|---|---|
+| Scene | Unity's Oasis sample |
+| Unity | **6000.7.0b9** (6.7 beta, URP 17.7) and **6000.6.8f1** (6.6, URP 17.6) |
+| Machine | Radeon RX 9060 XT 16 GB (RDNA 4, driver 32.0.32015), Ryzen 5 4500, Windows 11, 1920x1080 @ 144 Hz |
+| Method | 3 to 6 s averages per setting; 100+ frames of temporal convergence before each screenshot |
+
+| Question | Result |
+|---|---|
+| Do FSR 4, 3.1 and 2.3 work in every quality mode? | **Yes**, 15 of 15 combinations give the right render resolution and a clean image. |
+| Do the quality modes raise the frame rate? | **GPU-bound: yes**, 1.9x (Quality) to 4.3x (Ultra Performance). **CPU-bound: no**, render resolution is not the bottleneck. |
+| Does split-screen work? | **Yes**, one FSR context per view, correct images and scaling. |
+| Does frame generation work and show in an FPS counter? | **Yes**, rendered, generated and presented fps are shown separately. **About 1.6x when GPU-bound, about 1.0x when CPU-bound.** It never doubles fps in these tests. |
+| Does the HUD ghost? | **FSR alone: no. Frame generation: faint artifacts on fast-moving HUD edges.** HUD-less input is active and reduces them slightly. |
+| Pink or black image on a GPU that cannot run the chosen provider | **Fixed**: automatic failover, tested with simulated failures. |
+| Unity 6.6 and 6.7 | 0 compile errors on both; a real 6.6 Player ran all 15 modes. |
+
+### FSR quality modes
+
+All three generations were run at all five quality modes on the same camera. The provider is read back from the native plugin (`FSR4Diagnostics.ProviderInUse()`): FSR 4.1.2, 3.1.6 and 2.3.4.
+
+| Mode | Scale | Render resolution (1080p output) |
+|---|---|---|
+| Native AA | 1.0x | 1920 x 1080 |
+| Quality | 1.5x | 1280 x 720 |
+| Balanced | 1.7x | 1129 x 635 |
+| Performance | 2.0x | 960 x 540 |
+| Ultra Performance | 3.0x | 640 x 360 |
+
+![FSR matrix, vista](Documentation~/images/results/matrix_vista.jpg)
+
+![FSR matrix, foliage](Documentation~/images/results/matrix_foliage.jpg)
+
+Zoomed on thin grass and palm leaves, the hardest content for an upscaler. FSR 4 keeps individual blades even at Ultra Performance; bilinear at 50 % is blocky.
+
+![Detail crops](Documentation~/images/results/detail_foliage.jpg)
+
+Unity's built-in upscalers at comparable scales: [vista](Documentation~/images/results/legacy_vista.jpg), [foliage](Documentation~/images/results/legacy_foliage.jpg). The PSNR figures on the collages are against native + TAA and are only a rough guide; judge by eye.
+
+### Performance
+
+**At 1080p this scene is CPU-bound** on the test machine (a Ryzen 5 4500 with a much faster GPU), so every mode lands in the same band: native TAA 195 to 216 fps, FSR modes 147 to 242 fps, bilinear at 50 % 201 to 246 fps. The quality modes cannot help when the render resolution is not the bottleneck.
+
+![CPU-bound](Documentation~/images/results/perf_cpu_bound.png)
+
+To measure what the upscaler does for a GPU-bound game, the test project adds a clearly synthetic **render-resolution GPU load**: a full-screen shader pass before the upscaler, whose cost scales with pixel count like heavy shading in a real game. With it, native 1080p runs at about 41 fps.
+
+![GPU-bound](Documentation~/images/results/perf_modes.png)
+
+| fps, GPU-bound | Native AA | Quality | Balanced | Performance | Ultra Perf. |
+|---|---|---|---|---|---|
+| FSR 4.1.2 | 40 | 76 (1.9x) | 91 (2.2x) | 114 (2.8x) | 174 (4.3x) |
+| FSR 3.1.6 | 39 | 78 (1.9x) | 94 (2.3x) | 118 (2.9x) | 186 (4.6x) |
+| FSR 2.3.4 | 40 | 78 (1.9x) | 94 (2.3x) | 119 (2.9x) | 185 (4.5x) |
+
+Native 1080p TAA: 41 fps. Unity STP at 67 / 50 %: 78 / 121 fps. FSR 1.0 spatial at 50 %: 125 fps. FSR 4 Native AA is slightly slower than native TAA (40 vs 41) because of the ML pass, and FSR 4 costs a little more per frame than FSR 3.1 or 2.3.
+
+### Split-screen
+
+Two base cameras, each upscaled by its own FSR context (the debug HUD lists both). Each half is 960 x 1080 output.
+
+![Split-screen](Documentation~/images/results/splitscreen.jpg)
+
+| fps | Native TAA | Quality | Balanced | Performance | Ultra Perf. |
+|---|---|---|---|---|---|
+| GPU-bound, FSR 4 | 38 | 68 | | 96 | 136 |
+| CPU-bound, FSR 3.1 | 161 | 151 | 154 | 154 | 154 |
+
+![Split-screen GPU-bound](Documentation~/images/results/perf_split.png)
+
+GPU-bound, split-screen scales like a single view (1.8x to 3.6x). CPU-bound it sits at about 150 fps: two cameras mean two culls and two shadow passes, and each FSR view adds a little CPU cost, so FSR is 4 to 10 % slower than native there and Unity's STP (191 fps) is faster.
+
+### Frame generation results
+
+The test project's overlay (top right) shows **rendered + generated = presented** fps, measured with `FSR4FrameRateMeter`.
+
+![Frame generation, GPU-bound](Documentation~/images/results/perf_framegen.png)
+
+| Scenario | Off | On (rendered + generated) | Presented | vs off |
+|---|---|---|---|---|
+| GPU-bound, FSR 4 Quality | 76 | 62 + 62 | 123 | **1.6x** |
+| GPU-bound, pacing off | 76 | 60 + 60 | 119 | 1.6x |
+| CPU-bound 1080p, FSR 3.1 Quality | 210 | 99 + 99 | 198 | **0.9x to 1.0x** |
+| CPU-bound, pacing off | 210 | 100 + 100 | 199 | 0.95x |
+| CPU-bound, HUD-less on | 210 | 111 + 111 | 222 | 1.05x (run-to-run variance) |
+
+**Why it is not 2x.** Turning frame generation on stretches the real frame from 4.7 ms to about 10 ms at 1080p CPU-bound (13 to 16 ms when GPU-bound). That extra 3 to 5 ms per real frame is what cancels most of the doubling. The native plugin's log ([`FSR4FrameGen.perf.log`](Documentation~/test-results/FSR4FrameGen.perf.log)) shows about 8.5 ms inside its present hook per real frame, 3.5 ms of it the deliberate pacing wait. Switching pacing off did not shorten the frame (rendered fps stayed at about 99), so the cost is not the pacing itself. It sits in the present path and the extra GPU work: the plugin copies the backbuffer, interpolates, and issues more than one `Present` per real frame to keep Unity's backbuffer index valid. It was not profiled further.
+
+Practical guidance from these numbers: frame generation pays off when the GPU is the limit and the base rate is below about 100 fps; on a CPU-bound scene at 200+ fps it gains nothing, so leave it off.
+
+### HUD ghosting
+
+The test project animates a HUD stress panel (bouncing ball, scrolling ticker, moving marker, growing bar, rotating dial) as a **UI Toolkit overlay**, a **screen-space camera canvas** and a **world-space canvas**. Generated frames only exist in the swapchain, so the frame-generation captures are desktop captures, not in-engine screenshots.
+
+![HUD ghosting grid](Documentation~/images/results/hud_ghosting.jpg)
+
+Zoomed on the ball track (screen-space camera UI), four frames each:
+
+![HUD ghosting zoom](Documentation~/images/results/hud_ghosting_zoom.jpg)
+
+- **FSR alone:** the HUD is sharp and does not ghost.
+- **Frame generation:** generated frames show small crumbling at the trailing edge of fast-moving HUD elements, over a busy background.
+- **HUD-less input** is active and reduces that slightly. Speckle energy next to the ball (mean of 8 desktop captures, lower is cleaner; [data](Documentation~/test-results/hud_speckle.json)):
+
+| HUD type | FSR only (reference) | Frame gen | Frame gen + HUD-less |
+|---|---|---|---|
+| Overlay UI | 5.40 | 4.92 | 4.78 |
+| Screen-space camera | 8.31 | 8.23 | 7.95 |
+| World-space | 5.34 | 4.93 | 4.75 |
+
+The 3 to 4 % reduction is consistent in direction but within one standard deviation of the capture-to-capture spread. Treat it as a small improvement, not a fix.
+
+### Failure handling
+
+**Cause of the pink or black image.** A FidelityFX context is created lazily on the render thread. If creation, or every dispatch, failed (a provider the GPU cannot run, a size or flag the driver refuses), the native side returned and the upscaler's output texture stayed unwritten. The managed side only learned of it afterwards and never recovered.
+
+**What the package does now.**
+
+1. Each provider is **probed once** with a throw-away context before first use.
+2. A provider that fails (at the probe, at creation, or by failing every dispatch) is **blocked**, and the next one is used: FSR 4 > FSR 3.1 > FSR 2.3 > automatic.
+3. A new context's output is used only **after the render thread confirms** the context exists. Until then the frame keeps the un-upscaled colour.
+4. If nothing works, the upscaler reports itself unsupported (`FSR4Upscaler.hasFailed`, `runtimeFailureReason`; events `RuntimeFailed` and `ProviderFailed`) and records no pass, so URP shows its normal image. On URP 17.7 the framework then moves on to the next upscaler in its priority list.
+
+Tested in a Player with simulated failures (`-fsr4-simulate-failure[=probe|all]`):
+
+| Switch | What fails | Result |
+|---|---|---|
+| `-fsr4-simulate-failure=probe` | the first provider's probe | falls over to FSR 3.1.6, normal image ([log](Documentation~/test-results/failover_sim_probe.log)) |
+| `-fsr4-simulate-failure` | creation on the render thread (`ffxCreateContext` code 4) | blocks that provider and recovers with a working one ([log](Documentation~/test-results/failover_sim_render.log)) |
+| `-fsr4-simulate-failure=all` | every provider | the upscaler disables itself, a normal image is shown ([log](Documentation~/test-results/failover_sim_all.log)) |
+
+Verified only on a Radeon RX 9060 XT; the paths for GPUs without FSR 4 are exercised by these simulations, not on other hardware.
+
+### Unity 6.6 and 6.7
+
+The package selects its registration API at compile time (`FSR4_UPSCALER_ID_API`, set for `com.unity.render-pipelines.core` 17.7 and newer), so one code base serves both.
+
+| | 6000.6.8f1 (URP 17.6) | 6000.7.0b9 (URP 17.7) |
+|---|---|---|
+| Package compiles | 0 errors | 0 errors (Unity's `UAL0010` / `UAL0013` static-state warnings only) |
+| Registered and selectable | yes ("AMD FSR 4 (Custom Wrapper)") | yes (`achirastudio.fsr4`) |
+| Real D3D12 Player | FSR 4.1.2, 3.1.6, 2.3.4 x 5 modes, resolutions correct ([log](Documentation~/test-results/unity66_compat.log)) | full test run |
+
+On 6.6 the URP asset needs an `FSR4Options` sub-asset, which the asset inspector creates when you pick the upscaler.
+
+### Test project
+
+The test project (Oasis scene, in-game graphics menu, performance overlay, split-screen rig, HUD stress test, GPU-load pass and scripted runner) lives on the repository's `demo` branch. Run it from a Player build:
+
+```
+FSRShowcase.exe -fsr-run matrix,perf,motion,splitscreen,framegen,hud,menu -fsr-out <folder> [-fsr-load 1.0] [-fsr-res 1920x1080]
+```
+
+| Flag | Purpose |
+|---|---|
+| `-fsr-reset`, `-fsr-safe` | clear saved settings; start with Unity's STP and no frame generation |
+| `-fsr4-simulate-failure[=probe\|all]` | exercise the failover path (package switch) |
+| `-fsr4-hud`, `-fsr4-framegen`, `-fsr4-hudless`, `-fsr4-benchmark` | package switches: debug HUD, frame generation, HUD-less, benchmark |
+
+![Settings menu](Documentation~/images/results/menu_sheet.jpg)
 
 ## Scripting API
 
@@ -423,7 +592,7 @@ FidelityFX normally replaces the engine's swapchain, which Unity's plugin API do
 ├── Editor/                   Tools > AchiraStudio > FSR4 menu
 ├── Plugins/x86_64/           Native plugins and AMD's signed DLLs
 ├── Native~/                  C++ sources and CMake build (not imported by Unity)
-├── Documentation~/           Guides
+├── Documentation~/           Guides, test-result images and raw data (not imported by Unity)
 └── Samples~/                 Importable samples
 ```
 
@@ -455,7 +624,7 @@ FidelityFX normally replaces the engine's swapchain, which Unity's plugin API do
 - Player builds only.
 - One generated frame per rendered frame (2x).
 - One camera drives generation per frame, because the whole backbuffer is interpolated from one camera's depth and motion vectors. Other upscaled cameras in the same frame are ignored; `FSR4FrameGeneration.sourceCamera` selects the camera. In split-screen, frame generation pauses (see [Split-screen and multiple cameras](#split-screen-and-multiple-cameras)); upscaling keeps working per view.
-- On Direct3D 12 each rendered frame costs several extra full-screen copies and presents, which keep Unity's backbuffer index in step.
+- On Direct3D 12 each rendered frame costs several extra full-screen copies and presents, which keep Unity's backbuffer index in step. Measured on a Radeon RX 9060 XT at 1080p, frame generation lengthens every real frame by about 3 ms (GPU-bound) to 5 ms (CPU-bound), so presented fps is about 1.6x when GPU-bound and about 1.0x at 200+ fps on a CPU-bound scene. Turning pacing off does not shorten the frame. See [Frame generation results](#frame-generation-results).
 - Direct3D 12 requires VSync off.
 - Adds about one frame of latency, because the real frame is held back for the interpolated one.
 - The UI is part of the backbuffer, so animated UI can ghost. The experimental [HUD-less input](#hud-less-input-experimental) reduces this on Direct3D 12 with SDR output; it is not implemented for Vulkan or HDR output, and it only covers UI that URP draws after its final blit (Screen Space - Overlay canvases, UI Toolkit). UI rendered into the scene (Screen Space - Camera, World Space) cannot be separated.
@@ -465,26 +634,26 @@ FidelityFX normally replaces the engine's swapchain, which Unity's plugin API do
 
 Planned work, in rough priority order.
 
-1. Hardware validation across Direct3D 12 and Vulkan, with a published compatibility matrix. This includes the experimental HUD-less input, which is implemented for Direct3D 12 but has not run on hardware.
-2. A cheaper Direct3D 12 present path for frame generation, and a way to confirm that generated frames reach the display.
+1. Hardware validation beyond one GPU: Direct3D 12 on NVIDIA, Intel and older Radeon, and Vulkan, with a published compatibility matrix. (Direct3D 12 on a Radeon RX 9060 XT is done, including the HUD-less input; see [test results](#validation-and-test-results).)
+2. A cheaper Direct3D 12 present path for frame generation (it adds 3 to 5 ms per real frame today, which cancels the gain on CPU-bound scenes), and a way to confirm that generated frames reach the display.
 3. HUD-less input for Vulkan and HDR output.
 4. Frame generation for split-screen, from depth and motion vectors composed across all views (it pauses today).
 5. Reactive mask, transparency mask and exposure texture inputs. Not started: FSR 4 ignores these masks, so only the FSR 3.1 fallback would benefit.
 
-Done in the `beta` branch: the diagnostics report, the benchmark runner and the HUD-less input (see the [changelog](CHANGELOG.md)).
+Done in the `beta` branch: the diagnostics report, the benchmark runner, the HUD-less input, the provider failover and Unity 6.6 / 6.7 verification (see the [changelog](CHANGELOG.md)).
 
 ## Building the native plugins
 
 The repository ships prebuilt `FSR4UnityPlugin.dll` and `FSR4FrameGen.dll`. You only need to rebuild them if you change the C++ sources or the startup check reports them as out of date.
 
 > [!NOTE]
-> The C++ sources are currently ahead of the prebuilt DLLs. The DLLs still load and work with this version of the package, but the fixes listed under *Unreleased* in the [changelog](CHANGELOG.md), `FSR4FrameGeneration.providerInUse` and the HUD-less input need a rebuild.
+> The prebuilt DLLs were rebuilt from the current sources (FidelityFX SDK 2.4.0, MSVC 19.44) and are in sync with the C# in this branch, including `FSR4FrameGeneration.providerInUse` and the HUD-less input. Rebuild only if you change the C++.
 
 Requirements are CMake, the MSVC C++ toolchain, your Unity Editor installation and the FidelityFX SDK 2.4.0. With `UNITY_EDITOR_DIR` and `FFX_SDK_DIR` set, close Unity and run `Native~\build.bat`. Full instructions are in [Building the native plugins](Documentation~/Building-the-native-plugins.md).
 
 ## Reporting issues
 
-Because the package has not been validated on hardware yet, detailed reports are especially valuable. Please [open an issue](../../issues) and include:
+Because the package has been validated on a single GPU so far, reports from other hardware are especially valuable. Please [open an issue](../../issues) and include:
 
 - GPU model and driver version
 - Unity version and graphics API (Direct3D 12 or Vulkan)

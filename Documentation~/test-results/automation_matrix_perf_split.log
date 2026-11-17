@@ -1,0 +1,119 @@
+[15:01:16.655] Start: 6000.7.0b9  AMD Radeon RX 9060 XT (driver Direct3D 12 [level 12.2])  Direct3D12  1920x1080
+[15:01:16.700] Pipeline upscaler: AMD FSR 4 (Custom Wrapper)  wrapper active: True
+[15:01:16.700] === mode: matrix
+[15:01:20.971] matrix_vista_native_taa: Native (TAA) | req off -> in use '' | 1920x1080 -> 1920x1080 | 194.9 fps | FG Idle r188.0+g0.0
+[15:01:26.711] matrix_vista_fsr4_0: FSR 4 / Native AA | req FSR4 -> in use '4.1.2' | 1920x1080 -> 1920x1080 | 199.7 fps | FG Idle r203.8+g0.0
+[15:01:32.460] matrix_vista_fsr4_1: FSR 4 / Quality | req FSR4 -> in use '4.1.2' | 1280x720 -> 1920x1080 | 199.6 fps | FG Idle r204.6+g0.0
+[15:01:38.209] matrix_vista_fsr4_2: FSR 4 / Balanced | req FSR4 -> in use '4.1.2' | 1129x635 -> 1920x1080 | 206.1 fps | FG Idle r183.5+g0.0
+[15:01:43.957] matrix_vista_fsr4_3: FSR 4 / Performance | req FSR4 -> in use '4.1.2' | 960x540 -> 1920x1080 | 188.7 fps | FG Idle r200.2+g0.0
+[15:01:49.702] matrix_vista_fsr4_4: FSR 4 / Ultra Performance | req FSR4 -> in use '4.1.2' | 640x360 -> 1920x1080 | 192.2 fps | FG Idle r195.0+g0.0
+[15:01:55.511] matrix_vista_fsr3_0: FSR 3 / Native AA | req FSR3 -> in use '3.1.6' | 1920x1080 -> 1920x1080 | 173.1 fps | FG Idle r147.6+g0.0
+[15:02:01.311] matrix_vista_fsr3_1: FSR 3 / Quality | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 164.0 fps | FG Idle r158.7+g0.0
+[15:02:07.118] matrix_vista_fsr3_2: FSR 3 / Balanced | req FSR3 -> in use '3.1.6' | 1129x635 -> 1920x1080 | 162.2 fps | FG Idle r161.6+g0.0
+[15:02:13.057] matrix_vista_fsr3_3: FSR 3 / Performance | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 146.7 fps | FG Idle r139.6+g0.0
+[15:02:18.790] matrix_vista_fsr3_4: FSR 3 / Ultra Performance | req FSR3 -> in use '3.1.6' | 640x360 -> 1920x1080 | 194.7 fps | FG Idle r189.0+g0.0
+[15:02:24.560] matrix_vista_fsr2_0: FSR 2 / Native AA | req FSR2 -> in use '2.3.4' | 1920x1080 -> 1920x1080 | 193.9 fps | FG Idle r196.6+g0.0
+[15:02:30.324] matrix_vista_fsr2_1: FSR 2 / Quality | req FSR2 -> in use '2.3.4' | 1280x720 -> 1920x1080 | 185.2 fps | FG Idle r171.0+g0.0
+[15:02:36.089] matrix_vista_fsr2_2: FSR 2 / Balanced | req FSR2 -> in use '2.3.4' | 1129x635 -> 1920x1080 | 159.1 fps | FG Idle r156.5+g0.0
+[15:02:41.828] matrix_vista_fsr2_3: FSR 2 / Performance | req FSR2 -> in use '2.3.4' | 960x540 -> 1920x1080 | 180.8 fps | FG Idle r200.4+g0.0
+[15:02:47.697] matrix_vista_fsr2_4: FSR 2 / Ultra Performance | req FSR2 -> in use '2.3.4' | 640x360 -> 1920x1080 | 179.6 fps | FG Idle r163.4+g0.0
+[15:02:51.989] matrix_vista_legacy_STP_67: Legacy STP @ 67 % | req legacy:STP -> in use '' | 1286x724 -> 1920x1080 | 185.1 fps | FG Idle r185.5+g0.0
+[15:02:56.241] matrix_vista_legacy_STP_50: Legacy STP @ 50 % | req legacy:STP -> in use '' | 960x540 -> 1920x1080 | 201.5 fps | FG Idle r200.7+g0.0
+[15:03:00.480] matrix_vista_legacy_FSR1Spatial_67: Legacy FSR1Spatial @ 67 % | req legacy:FSR1Spatial -> in use '' | 1286x724 -> 1920x1080 | 199.7 fps | FG Idle r200.8+g0.0
+[15:03:04.713] matrix_vista_legacy_FSR1Spatial_50: Legacy FSR1Spatial @ 50 % | req legacy:FSR1Spatial -> in use '' | 960x540 -> 1920x1080 | 197.8 fps | FG Idle r197.8+g0.0
+[15:03:08.926] matrix_vista_legacy_Bilinear_50: Legacy Bilinear @ 50 % | req legacy:Bilinear -> in use '' | 960x540 -> 1920x1080 | 200.5 fps | FG Idle r201.8+g0.0
+[15:03:13.221] matrix_foliage_native_taa: Native (TAA) | req off -> in use '' | 1920x1080 -> 1920x1080 | 215.7 fps | FG Idle r214.0+g0.0
+[15:03:18.958] matrix_foliage_fsr4_0: FSR 4 / Native AA | req FSR4 -> in use '4.1.2' | 1920x1080 -> 1920x1080 | 205.8 fps | FG Idle r206.1+g0.0
+[15:03:24.716] matrix_foliage_fsr4_1: FSR 4 / Quality | req FSR4 -> in use '4.1.2' | 1280x720 -> 1920x1080 | 201.9 fps | FG Idle r205.8+g0.0
+[15:03:30.458] matrix_foliage_fsr4_2: FSR 4 / Balanced | req FSR4 -> in use '4.1.2' | 1129x635 -> 1920x1080 | 201.2 fps | FG Idle r195.8+g0.0
+[15:03:36.218] matrix_foliage_fsr4_3: FSR 4 / Performance | req FSR4 -> in use '4.1.2' | 960x540 -> 1920x1080 | 197.3 fps | FG Idle r192.2+g0.0
+[15:03:41.957] matrix_foliage_fsr4_4: FSR 4 / Ultra Performance | req FSR4 -> in use '4.1.2' | 640x360 -> 1920x1080 | 201.0 fps | FG Idle r210.4+g0.0
+[15:03:47.713] matrix_foliage_fsr3_0: FSR 3 / Native AA | req FSR3 -> in use '3.1.6' | 1920x1080 -> 1920x1080 | 208.6 fps | FG Idle r209.3+g0.0
+[15:03:53.466] matrix_foliage_fsr3_1: FSR 3 / Quality | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 197.4 fps | FG Idle r197.2+g0.0
+[15:03:59.221] matrix_foliage_fsr3_2: FSR 3 / Balanced | req FSR3 -> in use '3.1.6' | 1129x635 -> 1920x1080 | 210.8 fps | FG Idle r228.9+g0.0
+[15:04:04.964] matrix_foliage_fsr3_3: FSR 3 / Performance | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 210.3 fps | FG Idle r219.3+g0.0
+[15:04:10.689] matrix_foliage_fsr3_4: FSR 3 / Ultra Performance | req FSR3 -> in use '3.1.6' | 640x360 -> 1920x1080 | 229.6 fps | FG Idle r229.8+g0.0
+[15:04:16.437] matrix_foliage_fsr2_0: FSR 2 / Native AA | req FSR2 -> in use '2.3.4' | 1920x1080 -> 1920x1080 | 225.2 fps | FG Idle r225.9+g0.0
+[15:04:22.176] matrix_foliage_fsr2_1: FSR 2 / Quality | req FSR2 -> in use '2.3.4' | 1280x720 -> 1920x1080 | 236.9 fps | FG Idle r236.8+g0.0
+[15:04:27.928] matrix_foliage_fsr2_2: FSR 2 / Balanced | req FSR2 -> in use '2.3.4' | 1129x635 -> 1920x1080 | 236.5 fps | FG Idle r243.8+g0.0
+[15:04:33.699] matrix_foliage_fsr2_3: FSR 2 / Performance | req FSR2 -> in use '2.3.4' | 960x540 -> 1920x1080 | 230.3 fps | FG Idle r230.8+g0.0
+[15:04:39.432] matrix_foliage_fsr2_4: FSR 2 / Ultra Performance | req FSR2 -> in use '2.3.4' | 640x360 -> 1920x1080 | 241.7 fps | FG Idle r232.9+g0.0
+[15:04:43.662] matrix_foliage_legacy_STP_67: Legacy STP @ 67 % | req legacy:STP -> in use '' | 1286x724 -> 1920x1080 | 244.8 fps | FG Idle r246.4+g0.0
+[15:04:47.890] matrix_foliage_legacy_STP_50: Legacy STP @ 50 % | req legacy:STP -> in use '' | 960x540 -> 1920x1080 | 244.0 fps | FG Idle r246.1+g0.0
+[15:04:52.113] matrix_foliage_legacy_FSR1Spatial_67: Legacy FSR1Spatial @ 67 % | req legacy:FSR1Spatial -> in use '' | 1286x724 -> 1920x1080 | 242.2 fps | FG Idle r244.3+g0.0
+[15:04:56.335] matrix_foliage_legacy_FSR1Spatial_50: Legacy FSR1Spatial @ 50 % | req legacy:FSR1Spatial -> in use '' | 960x540 -> 1920x1080 | 243.9 fps | FG Idle r243.9+g0.0
+[15:05:00.542] matrix_foliage_legacy_Bilinear_50: Legacy Bilinear @ 50 % | req legacy:Bilinear -> in use '' | 960x540 -> 1920x1080 | 246.1 fps | FG Idle r241.5+g0.0
+[15:05:00.572] === mode: perf
+[15:05:00.575] perf: synthetic GPU load 1.00 (4000 iterations per pixel)
+[15:05:07.875] perf_native_taa: Native (TAA) | req off -> in use '' | 1920x1080 -> 1920x1080 | 40.7 fps | FG Idle r40.7+g0.0
+[15:05:14.785] perf_fsr4_0: FSR 4 / Native AA | req FSR4 -> in use '4.1.2' | 1920x1080 -> 1920x1080 | 39.6 fps | FG Idle r39.6+g0.0
+[15:05:21.522] perf_fsr4_1: FSR 4 / Quality | req FSR4 -> in use '4.1.2' | 1280x720 -> 1920x1080 | 76.1 fps | FG Idle r75.6+g0.0
+[15:05:28.266] perf_fsr4_2: FSR 4 / Balanced | req FSR4 -> in use '4.1.2' | 1129x635 -> 1920x1080 | 90.8 fps | FG Idle r91.1+g0.0
+[15:05:34.991] perf_fsr4_3: FSR 4 / Performance | req FSR4 -> in use '4.1.2' | 960x540 -> 1920x1080 | 113.7 fps | FG Idle r114.3+g0.0
+[15:05:41.717] perf_fsr4_4: FSR 4 / Ultra Performance | req FSR4 -> in use '4.1.2' | 640x360 -> 1920x1080 | 173.5 fps | FG Idle r171.8+g0.0
+[15:05:48.659] perf_fsr3_0: FSR 3 / Native AA | req FSR3 -> in use '3.1.6' | 1920x1080 -> 1920x1080 | 39.3 fps | FG Idle r39.3+g0.0
+[15:05:55.409] perf_fsr3_1: FSR 3 / Quality | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 77.9 fps | FG Idle r77.9+g0.0
+[15:06:02.161] perf_fsr3_2: FSR 3 / Balanced | req FSR3 -> in use '3.1.6' | 1129x635 -> 1920x1080 | 93.6 fps | FG Idle r93.9+g0.0
+[15:06:08.907] perf_fsr3_3: FSR 3 / Performance | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 117.7 fps | FG Idle r117.7+g0.0
+[15:06:15.645] perf_fsr3_4: FSR 3 / Ultra Performance | req FSR3 -> in use '3.1.6' | 640x360 -> 1920x1080 | 186.1 fps | FG Idle r186.2+g0.0
+[15:06:22.600] perf_fsr2_0: FSR 2 / Native AA | req FSR2 -> in use '2.3.4' | 1920x1080 -> 1920x1080 | 39.7 fps | FG Idle r39.7+g0.0
+[15:06:29.366] perf_fsr2_1: FSR 2 / Quality | req FSR2 -> in use '2.3.4' | 1280x720 -> 1920x1080 | 78.2 fps | FG Idle r78.1+g0.0
+[15:06:36.117] perf_fsr2_2: FSR 2 / Balanced | req FSR2 -> in use '2.3.4' | 1129x635 -> 1920x1080 | 94.2 fps | FG Idle r94.4+g0.0
+[15:06:42.864] perf_fsr2_3: FSR 2 / Performance | req FSR2 -> in use '2.3.4' | 960x540 -> 1920x1080 | 118.6 fps | FG Idle r119.3+g0.0
+[15:06:49.628] perf_fsr2_4: FSR 2 / Ultra Performance | req FSR2 -> in use '2.3.4' | 640x360 -> 1920x1080 | 185.0 fps | FG Idle r184.1+g0.0
+[15:06:56.398] perf_legacy_STP_67: Legacy STP @ 67 % | req legacy:STP -> in use '' | 1286x724 -> 1920x1080 | 78.3 fps | FG Idle r78.4+g0.0
+[15:07:03.122] perf_legacy_STP_50: Legacy STP @ 50 % | req legacy:STP -> in use '' | 960x540 -> 1920x1080 | 120.6 fps | FG Idle r120.1+g0.0
+[15:07:09.870] perf_legacy_FSR1Spatial_50: Legacy FSR1Spatial @ 50 % | req legacy:FSR1Spatial -> in use '' | 960x540 -> 1920x1080 | 124.5 fps | FG Idle r124.3+g0.0
+[15:07:18.124] perf_fg_off: Frame generation off | req FSR4 -> in use '4.1.2' | 1280x720 -> 1920x1080 | 76.3 fps | FG Idle r76.3+g0.0
+[15:07:29.423] perf_fg_on: Frame generation on (pacing on) | req FSR4 -> in use '4.1.2' | 1280x720 -> 1920x1080 | 61.7 fps | FG Active r61.8+g61.8
+[15:07:39.705] perf_fg_on_nopacing: Frame generation on (pacing off) | req FSR4 -> in use '4.1.2' | 1280x720 -> 1920x1080 | 59.6 fps | FG Active r59.7+g59.7
+[15:07:50.101] perf_split_native_taa: Split-screen / native (TAA) | req off -> in use '' | 1920x1080 -> 1920x1080 | 38.2 fps | FG Idle r38.2+g0.0
+[15:07:57.360] perf_split_fsr4_1: Split-screen / FSR 4 Quality | req FSR4 -> in use '4.1.2' | 640x720 -> 960x1080 | 68.2 fps | FG Idle r68.1+g0.0
+[15:08:04.607] perf_split_fsr4_3: Split-screen / FSR 4 Performance | req FSR4 -> in use '4.1.2' | 480x540 -> 960x1080 | 95.9 fps | FG Idle r95.5+g0.0
+[15:08:11.845] perf_split_fsr4_4: Split-screen / FSR 4 Ultra Performance | req FSR4 -> in use '4.1.2' | 320x360 -> 960x1080 | 135.8 fps | FG Idle r133.6+g0.0
+[15:08:12.843] === mode: motion
+[15:08:16.567] motion_native_taa: Native (TAA) (camera panning) |  | 1920x1080 -> 1920x1080
+[15:08:20.299] motion_fsr3_1: FSR 3 / q1 (camera panning) | 3.1.6 | 1280x720 -> 1920x1080
+[15:08:24.041] motion_fsr3_3: FSR 3 / q3 (camera panning) | 3.1.6 | 960x540 -> 1920x1080
+[15:08:27.764] motion_fsr3_4: FSR 3 / q4 (camera panning) | 3.1.6 | 640x360 -> 1920x1080
+[15:08:31.492] motion_fsr2_3: FSR 2 / Performance (camera panning) | 2.3.4 | 960x540 -> 1920x1080
+[15:08:31.494] === mode: splitscreen
+[15:08:40.276] split_native_taa: Split-screen / native (TAA) | req off -> in use '' | 1920x1080 -> 1920x1080 | 161.5 fps | FG Idle r175.7+g0.0
+[15:08:46.524] split q0: views=2 [MainCamera: ctx 61, 960x1080 -> 960x1080, 883 dispatches] [SplitScreen Camera B: ctx 62, 960x1080 -> 960x1080, 883 dispatches] 
+[15:08:52.763] split q1: views=2 [MainCamera: ctx 63, 640x720 -> 960x1080, 880 dispatches] [SplitScreen Camera B: ctx 64, 640x720 -> 960x1080, 880 dispatches] 
+[15:08:58.994] split q2: views=2 [MainCamera: ctx 65, 564x635 -> 960x1080, 889 dispatches] [SplitScreen Camera B: ctx 66, 564x635 -> 960x1080, 889 dispatches] 
+[15:09:05.243] split q3: views=2 [MainCamera: ctx 67, 480x540 -> 960x1080, 875 dispatches] [SplitScreen Camera B: ctx 68, 480x540 -> 960x1080, 875 dispatches] 
+[15:09:11.474] split q4: views=2 [MainCamera: ctx 69, 320x360 -> 960x1080, 884 dispatches] [SplitScreen Camera B: ctx 70, 320x360 -> 960x1080, 884 dispatches] 
+[15:09:17.214] split_stp_067: Split-screen / STP 67% | req legacy:STP -> in use '' | 1286x724 -> 1920x1080 | 191.2 fps | FG Idle r191.9+g0.0
+[15:09:22.948] split_framegen_requested: Split-screen / frame generation requested | req FSR3 -> in use '3.1.6' | 640x720 -> 960x1080 | 143.3 fps | FG Idle r143.6+g0.0
+[15:09:23.948] === mode: framegen
+[15:09:33.206] fg_off: Frame generation off | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 224.8 fps | FG Idle r228.8+g0.0
+[15:09:46.492] fg_on: Frame generation on | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 100.9 fps | FG Active r101.9+g101.9
+[15:09:48.726] external capture 'fg_on_desktop': done
+[15:09:58.971] fg_on_nopacing: Frame generation on, pacing off | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 96.4 fps | FG Active r96.1+g96.1
+[15:10:09.233] fg_on_hudless: Frame generation on + HUD-less | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 99.2 fps | FG Active r99.7+g99.7
+[15:10:16.497] fg_off_again: Frame generation off again | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 228.8 fps | FG Idle r250.1+g0.0
+[15:10:16.515] === mode: hud
+[15:10:23.735] hud_OverlayUIToolkit_fsr: OverlayUIToolkit / fsr | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 263.9 fps | FG Idle r253.7+g0.0
+[15:10:30.984] hud_OverlayUIToolkit_fsr_fg: OverlayUIToolkit / fsr_fg | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 117.4 fps | FG Active r117.7+g117.7
+[15:10:32.718] external capture 'hud_OverlayUIToolkit_fsr_fg_desktop': done
+[15:10:39.983] hud_OverlayUIToolkit_fsr_fg_hudless: OverlayUIToolkit / fsr_fg_hudless | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 113.4 fps | FG Active r112.6+g112.6
+[15:10:41.684] external capture 'hud_OverlayUIToolkit_fsr_fg_hudless_desktop': done
+[15:10:48.908] hud_ScreenSpaceCamera_fsr: ScreenSpaceCamera / fsr | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 265.3 fps | FG Idle r266.9+g0.0
+[15:10:56.162] hud_ScreenSpaceCamera_fsr_fg: ScreenSpaceCamera / fsr_fg | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 114.6 fps | FG Active r109.1+g109.1
+[15:10:57.967] external capture 'hud_ScreenSpaceCamera_fsr_fg_desktop': done
+[15:11:05.210] hud_ScreenSpaceCamera_fsr_fg_hudless: ScreenSpaceCamera / fsr_fg_hudless | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 129.6 fps | FG Active r133.2+g133.2
+[15:11:08.236] external capture 'hud_ScreenSpaceCamera_fsr_fg_hudless_desktop': done
+[15:11:15.464] hud_WorldSpace_fsr: WorldSpace / fsr | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 270.6 fps | FG Idle r284.6+g0.0
+[15:11:22.698] hud_WorldSpace_fsr_fg: WorldSpace / fsr_fg | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 132.9 fps | FG Active r133.5+g133.5
+[15:11:25.663] external capture 'hud_WorldSpace_fsr_fg_desktop': done
+[15:11:32.916] hud_WorldSpace_fsr_fg_hudless: WorldSpace / fsr_fg_hudless | req FSR3 -> in use '3.1.6' | 960x540 -> 1920x1080 | 132.7 fps | FG Active r133.6+g133.6
+[15:11:35.879] external capture 'hud_WorldSpace_fsr_fg_hudless_desktop': done
+[15:11:40.608] hud_ScreenSpaceCamera_native: ScreenSpaceCamera / native | req off -> in use '' | 1920x1080 -> 1920x1080 | 260.7 fps | FG Idle r260.9+g0.0
+[15:11:40.610] === mode: menu
+[15:11:45.033] menu_display: Menu / display | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 0.0 fps | FG Active r124.3+g124.3
+[15:11:46.438] menu_upscaling: Menu / upscaling | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 0.0 fps | FG Active r123.6+g123.6
+[15:11:47.848] menu_framegen: Menu / framegen | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 0.0 fps | FG Active r121.5+g121.5
+[15:11:49.261] menu_advanced: Menu / advanced | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 0.0 fps | FG Active r126.5+g126.5
+[15:11:50.674] menu_overlays: Menu / overlays | req FSR3 -> in use '3.1.6' | 1280x720 -> 1920x1080 | 0.0 fps | FG Active r127.2+g127.2
+[15:11:50.758] All steps finished.

@@ -1,0 +1,36 @@
+{
+ "metric": "mean absolute Laplacian over the ball-track strip, ball +-45 px excluded; 8 desktop captures per variant (grey levels)",
+ "OverlayUIToolkit": {
+  "fsr_only_reference": 5.4,
+  "fsr_fg": {
+   "mean": 4.92,
+   "sd": 0.35
+  },
+  "fsr_fg_hudless": {
+   "mean": 4.78,
+   "sd": 0.35
+  }
+ },
+ "ScreenSpaceCamera": {
+  "fsr_only_reference": 8.31,
+  "fsr_fg": {
+   "mean": 8.23,
+   "sd": 0.72
+  },
+  "fsr_fg_hudless": {
+   "mean": 7.95,
+   "sd": 0.68
+  }
+ },
+ "WorldSpace": {
+  "fsr_only_reference": 5.34,
+  "fsr_fg": {
+   "mean": 4.93,
+   "sd": 0.15
+  },
+  "fsr_fg_hudless": {
+   "mean": 4.75,
+   "sd": 0.14
+  }
+ }
+}
